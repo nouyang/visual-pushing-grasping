@@ -91,3 +91,14 @@ data = binascii.hexlify(data_raw)
 # BD = 188, aka position = 188/255
 
 # 255 = fully closed
+
+self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+self.tcp_socket.connect((self.tcp_host_ip, self.tcp_port))
+
+self.tcp_socket.send(str.encode(tcp_command))
+tcp_command = "movel(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0)\n" % (increment_position[0], increment_position[1],
+                                                                   increment_position[2], tool_orientation[0], tool_orientation[1], tool_orientation[2], self.tool_acc, self.tool_vel)
+self.tcp_socket.send(str.encode(tcp_command))
+
+time_start = time.time()
+tcp_state_data = self.tcp_socket.recv(2048)

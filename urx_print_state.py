@@ -28,13 +28,21 @@ if __name__ == "__main__":
         while True:
             rob = urx.Robot(tcp_host_ip)
             pose = rob.getl()
-            print("robot tcp is at: ", np.array(pose), '\n')
+            # pose = rob.secmon.get_cartesian_info(wait=True)
+            # data = rob.secmon.get_all_data(wait=False)
+            data = rob.getdata(wait=False)
+            # print("robot tcp is at: ", np.array(pose), '\n')
+            # print("robot state: ", data, '\n')
+            # print("robot state analog: ",
+            # data['ToolData'], '\n')
+            # print("robot state masterboard: ",
+                  # data['MasterBoardData'], '\n')
             time.sleep(0.05)
     except:
-        print('caught exception')
-        print('closing robot')
-        rob.close()
+        # print('caught exception')
+        # print('closing robot')
+        # rob.close()
         # print('exiting')
-        # sys.exit()
+        sys.exit()
         print('exiting again')
         os._exit(1)

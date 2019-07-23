@@ -335,6 +335,37 @@ class URRobot(object):
             self.logger.debug("Received pose from robot: %s", pose)
         return pose
 
+    def get_gripper_pos(self, wait=False, _log=True):
+        """
+        test
+        """
+        # header = "def myProg():\n"
+        # end = "end\n"
+        # prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
+        # SOCKET_NAME)
+        # prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
+        # SOCKET_NAME)
+        # prog += end
+        # print('prog', prog)
+        # self.send_program(prog)
+
+        # pose = self.secmon.get_cartesian_info(wait)
+        # if pose:
+        # pose = [pose["X"], pose["Y"], pose["Z"],
+        # pose["Rx"], pose["Ry"], pose["Rz"]]
+        # if _log:
+        # self.logger.debug("Received pose from robot: %s", pose)
+        return pose
+
+    def getdata(self, wait=False, _log=True):
+        """
+        getalldata
+        """
+        data = self.secmon.get_all_data(wait)
+        if _log:
+            self.logger.debug("Received data dict from robot: %s", data)
+        return data
+
     def movec(self, pose_via, pose_to, acc=0.01, vel=0.01, wait=True, threshold=None):
         """
         Move Circular: Move to position (circular in tool-space)
@@ -380,42 +411,48 @@ class URRobot(object):
             return self.getl()
 
     # NOTE: this is important
-    def throw_primitive(self, pose_list, wait=True, threshold=0.001):
+    def throw_primitive(self, pose_list, wait=False, threshold=0.001):
         radius = 0.2
-        command = 'movel'
         header = "def myProg():\n"
-        acc = 1
-        vel = 1
         end = "end\n"
+        acc = 1.2
+        vel = 1.2
         prog = header
+        SOCKET_NAME = "gripper_socket"
         # Activate gripper
         prog += 'socket_open(\"{}\",{},\"{}\"\n)'.format("127.0.0.1",
-                                                         63352,
-                                                         "gripper_socket")
+                                                         63352, SOCKET_NAME)
         prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
                                                             SOCKET_NAME)
         prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
                                                             SOCKET_NAME)
-        for idx, pose in enumerate(pose_list):
+        for idx, pose_val in enumerate(pose_list):
+            print(str(pose_val))
             if idx == (len(pose_list) - 1):
-                radius = 0.01
-            if str(pose) == 'open':
+                print('last 1')
+                radius = 0.00
+            if str(pose_val) == 'open':
+                print('hi opening')
                 SOCKET_NAME = "gripper_socket"
-                msg = "socket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
-                                                                  SOCKET_NAME)
+                prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
+                                                                    SOCKET_NAME)
             else:
-                if str(pose[0]) == 'j':
+                pose_type = str(pose_val[0])
+                pose = [float(i) for i in pose_val[1:]]
+                if pose_type == 'j':
                     prog += self._format_move(
-                        "movej", pose[1:], acc, vel, radius) + "\n"
-                elif str(pose[0]) == 'p':
+                        "movel", pose, acc, vel, radius) + "\n"
+                elif pose_type == 'p':
                     prog += self._format_move(
-                        'movej', pose[1:], acc, vel, radius, prefix="p") + "\n"
+                        'movel', pose, acc, vel, radius, prefix="p") + "\n"
         prog += end
         print('prog', prog)
         self.send_program(prog)
 
         if wait:
-            self._wait_for_move(target=pose_list[-1][1:], threshold=threshold)
+            final_pose = [float(i) for i in pose_val[1:]]
+            print(final_pose)
+            self._wait_for_move(target=final_pose, threshold=threshold)
             return self.getl()
 
         # self.move_to(start_position, start_axisangle, acc_scaling=K,
@@ -432,7 +469,7 @@ class URRobot(object):
     # tpose.append(radius)
     # return "{}({}[{},{},{},{},{},{}], a={}, v={}, r={})".format(command, prefix, *tpose)
 
-    # def _socket_set_var(self, var, value, socket_name):
+   # def _socket_set_var(self, var, value, socket_name):
    # msg = "socket_set_var(\"{}\",{},\"{}\")".format(var, value, socket_name)  # noqa
    # self.add_line_to_program(msg)
    # self._sync()

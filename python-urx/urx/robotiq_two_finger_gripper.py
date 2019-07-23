@@ -42,6 +42,7 @@ gripper and if it's holding an object.
 import logging
 import os
 import time
+import socket
 
 from urx.urscript import URScript
 
@@ -87,8 +88,8 @@ class RobotiqScript(URScript):
             self.add_header_to_program(rq_script)
 
     def _rq_get_var(self, var_name, nbytes):
-        self._socket_send_string("GET {}".format(var_name))
-        self._socket_read_byte_list(nbytes)
+        self._socket_get_var(var_name, self.socket_name)
+        return bytes
 
     def _get_gripper_fault(self):
         self._rq_get_var(FLT, 2)
@@ -97,7 +98,25 @@ class RobotiqScript(URScript):
         self._rq_get_var(OBJ, 1)
 
     def _get_gripper_status(self):
-        self._rq_get_var(STA, 1)
+        # bytes = self._rq_get_var(STA, 4)
+        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_sock.close()
+        tcp_sock.connect((self.socket_host, self.socket_port))
+
+        state_data = tcp_socket.recv(1024)
+
+        # msg = "socket_get_var(\"{}\",\"{}\")".format(POS, socket_name)
+        # self.tcp_sock.send(str.encode(msg))
+
+        # state_data = tcp_socket.recv(2048)
+        # print('state', state_data)
+        # data_bytes = bytearray()
+        # print('bytes', data_bytes)
+        # data_bytes.extend(state_data)
+        # data_length = struct.unpack("!i", data_bytes[0:4])[0]
+        # robot_message_type = data_bytes[4]
+
+        return data_bytes
 
     def _set_gripper_activate(self):
         self._socket_set_var(GTO, 1, self.socket_name)
@@ -189,6 +208,39 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._sleep(0.005)
 
         return urscript
+
+    def _get_gripper_status(self):
+        # urscript = RobotiqScript(socket_host=self.socket_host,
+                                 # socket_port=self.socket_port,
+                                 # socket_name=self.socket_name)
+        # bytes = urscript._get_gripper_status()
+
+        # bytes = self._rq_get_var(STA, 4)
+        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        SOCKET_HOST = "10.75.15.91"
+        SOCKET_PORT = 63352
+
+        tcp_sock.connect((SOCKET_HOST, SOCKET_PORT))
+        msg = "socket_open(\"{}\",{},\"{}\")".format(SOCKET_HOST,
+                                                     SOCKET_PORT,
+                                                     "gripper_socket")
+        tcp_sock.send(str.encode(msg))
+        # msg = "socket_get_var(\"{}\",\"{}\")".format(POS,
+        # "socket_name='gripper_socket'")
+        print('sending msg', msg)
+        msg = "socket_get_var(POS)"
+        tcp_sock.send(msg)
+        print('sending msg', msg)
+        state_data = tcp_sock.recv(2048)
+        print('state', state_data)
+        msg = "socket_close(\"{}\")".format("gripper_socket")
+        # data_bytes = bytearray()
+        # print('bytes', data_bytes)
+        # data_bytes.extend(state_data)
+        # data_length = struct.unpack("!i", data_bytes[0:4])[0]
+        # robot_message_type = data_bytes[4]
+
+        return None
 
     def gripper_action(self, value):
         """

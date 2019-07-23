@@ -8,15 +8,25 @@ if __name__ == '__main__':
     # robotiqgrip = Robotiq_Two_Finger_Gripper(socket_host="/dev/ttyUSB0")
     robotiqgrip = Robotiq_Two_Finger_Gripper(rob)
 
-    if(len(sys.argv) != 2):
-        print "false"
-        sys.exit()
+    # if(len(sys.argv) != 2):
+    # print("false")
+    # sys.exit()
 
     if(sys.argv[1] == "close"):
         robotiqgrip.close_gripper()
     if(sys.argv[1] == "open"):
         robotiqgrip.open_gripper()
+        print('hi')
 
-    rob.close()
-    print "true"
-    sys.exit()
+    # try:
+        # while True:
+    bytes = robotiqgrip._get_gripper_status()
+    print('bytes', bytes, '/n')
+    # except:
+    # # print('caught exception')
+    # # print('closing robot')
+    # rob.close()
+    # # print('exiting')
+    # sys.exit()
+    # print('exiting again')
+    # os._exit(1)
