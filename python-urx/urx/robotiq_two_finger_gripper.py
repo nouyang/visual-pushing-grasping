@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+
 """
 Python library to control Robotiq Two Finger Gripper connected to UR robot via
 Python-URX
@@ -42,7 +43,6 @@ gripper and if it's holding an object.
 import logging
 import os
 import time
-import socket
 
 from urx.urscript import URScript
 
@@ -88,8 +88,8 @@ class RobotiqScript(URScript):
             self.add_header_to_program(rq_script)
 
     def _rq_get_var(self, var_name, nbytes):
-        self._socket_get_var(var_name, self.socket_name)
-        return bytes
+        self._socket_send_string("GET {}".format(var_name), self.socket_name)
+        self._socket_read_byte_list(nbytes, self.socket_name)
 
     def _get_gripper_fault(self):
         self._rq_get_var(FLT, 2)
@@ -98,25 +98,27 @@ class RobotiqScript(URScript):
         self._rq_get_var(OBJ, 1)
 
     def _get_gripper_status(self):
-        # bytes = self._rq_get_var(STA, 4)
-        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_sock.close()
-        tcp_sock.connect((self.socket_host, self.socket_port))
+        # self._rq_get_var(STA, 1)
+        self._socket_get_var(STA, self.socket_name)
 
-        state_data = tcp_socket.recv(1024)
+    # TODO
+    def _get_gripper_pos(self):
+        print('in get_pripper_pos()')
+        # self._socket_send_string(
+        # 'popup(rq_get_position(), " gripper pos (%)", blocking=True)', self.socket_name)
+        # self._socket_send_msg(
+        # 'textmsg(rq_current_pos(), "hi")', self.socket_name)
+        self._socket_send_msg(
+            'textmsg(rq_get_position())', self.socket_name)
+        # self._socket_send_string(
+        # 'textmsg(rq_get_position())', self.socket_name)
+        # self._socket_send_string(
+        # 'textmsg(rq_current_pos)', self.socket_name)
 
-        # msg = "socket_get_var(\"{}\",\"{}\")".format(POS, socket_name)
-        # self.tcp_sock.send(str.encode(msg))
-
-        # state_data = tcp_socket.recv(2048)
-        # print('state', state_data)
-        # data_bytes = bytearray()
-        # print('bytes', data_bytes)
-        # data_bytes.extend(state_data)
-        # data_length = struct.unpack("!i", data_bytes[0:4])[0]
-        # robot_message_type = data_bytes[4]
-
-        return data_bytes
+        # self._rq_get_var(STA, 1)
+        # self._socket_get_var("PO", self.socket_name)
+        # byte = self._socket_read_byte_list(1, self.socket_name)
+        # return byte
 
     def _set_gripper_activate(self):
         self._socket_set_var(GTO, 1, self.socket_name)
@@ -169,10 +171,7 @@ class Robotiq_Two_Finger_Gripper(object):
         self.payload = payload
         self.speed = speed
         self.force = force
-        # self.socket_host = socket_host
-        print('init gripper')
-        self.socket_host = "127.0.0.1"
-        # self.socket_host = "128.0.0.1"
+        self.socket_host = socket_host
         self.socket_port = socket_port
         self.socket_name = socket_name
         self.logger = logging.getLogger(u"robotiq")
@@ -190,8 +189,10 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._set_analog_inputrange(1, 0)
         urscript._set_analog_inputrange(2, 0)
         urscript._set_analog_inputrange(3, 0)
-        urscript._set_analog_outputdomain(0, 0)
-        urscript._set_analog_outputdomain(1, 0)
+        # urscript._set_analog_outputdomain(0, 0)
+        # urscript._set_analog_outputdomain(1, 0)
+        urscript._set_analog_outputdomain(0, 1)  # port; 0=current, 1=voltage
+        urscript._set_analog_outputdomain(1, 1)
         urscript._set_tool_voltage(0)
         urscript._set_runstate_outputs()
 
@@ -201,46 +202,30 @@ class Robotiq_Two_Finger_Gripper(object):
         urscript._set_gripper_force(self.force)
 
         # Initialize the gripper
-        urscript._set_robot_activate()
-        urscript._set_gripper_activate()
+        # urscript._set_robot_activate()
+        # urscript._set_gripper_activate()
 
         # Wait on activation to avoid USB conflicts
-        urscript._sleep(0.005)
+        urscript._sleep(0.1)
 
         return urscript
 
-    def _get_gripper_status(self):
-        # urscript = RobotiqScript(socket_host=self.socket_host,
-                                 # socket_port=self.socket_port,
-                                 # socket_name=self.socket_name)
-        # bytes = urscript._get_gripper_status()
+    def get_gripper_pos(self):
+        urscript = self._get_new_urscript()
 
-        # bytes = self._rq_get_var(STA, 4)
-        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        SOCKET_HOST = "10.75.15.91"
-        SOCKET_PORT = 63352
+        # Move to the position
+        # sleep = 2.0
+        sleep = 0.05
+        urscript._get_gripper_pos()
 
-        tcp_sock.connect((SOCKET_HOST, SOCKET_PORT))
-        msg = "socket_open(\"{}\",{},\"{}\")".format(SOCKET_HOST,
-                                                     SOCKET_PORT,
-                                                     "gripper_socket")
-        tcp_sock.send(str.encode(msg))
-        # msg = "socket_get_var(\"{}\",\"{}\")".format(POS,
-        # "socket_name='gripper_socket'")
-        print('sending msg', msg)
-        msg = "socket_get_var(POS)"
-        tcp_sock.send(msg)
-        print('sending msg', msg)
-        state_data = tcp_sock.recv(2048)
-        print('state', state_data)
-        msg = "socket_close(\"{}\")".format("gripper_socket")
-        # data_bytes = bytearray()
-        # print('bytes', data_bytes)
-        # data_bytes.extend(state_data)
-        # data_length = struct.unpack("!i", data_bytes[0:4])[0]
-        # robot_message_type = data_bytes[4]
+        urscript._sleep(sleep)
+        # Send the script
+        print("sending script")
+        self.robot.send_program(urscript())
 
-        return None
+        # sleep the code the same amount as the urscript to ensure that
+        # the action completes
+        time.sleep(sleep)
 
     def gripper_action(self, value):
         """
@@ -253,7 +238,7 @@ class Robotiq_Two_Finger_Gripper(object):
 
         # Move to the position
         # sleep = 2.0
-        sleep = 0.005
+        sleep = 0.1
         urscript._set_gripper_position(value)
         urscript._sleep(sleep)
 

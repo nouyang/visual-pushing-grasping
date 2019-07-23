@@ -136,7 +136,7 @@ class URRobot(object):
         """
         send message to the GUI log tab on the robot controller
         """
-        prog = "textmsg(%s)" % msg
+        prog = "textmsg(%s)" % msg + "\n"
         self.send_program(prog)
 
     def set_digital_out(self, output, val):
@@ -189,7 +189,30 @@ class URRobot(object):
         """
         set analog output, val is a float
         """
-        prog = "set_analog_out(%s, %s)" % (output, val)
+        # prog = "set_analog_out(%s, %s)" % (output, val)
+        # prog = "set_standard_analog_out(%s, %s)" % (output, val)
+        # header = "def myAnalogProg():\n"
+        # end = "end\n"
+
+        # prog = header
+        # # prog += "set_standard_analog_out(%s, %s)\n" % (output, val)
+        prog = "\tset_standard_analog_out(%s, %s)\n" % (output, val)
+        # prog += "set_standard_analog_out(%s, %s)\n" % (output, val)
+        # prog += end
+        # prog += "myAnalogProg()"
+
+        self.send_program(prog)
+
+    def set_analog_out_to_pos(self):
+        prog = "def analogToPos():\n"
+        prog += '\tsocket_close("gripper_socket")\n'
+        prog += '\tsocket_open("127.0.0.1", 63352, "gripper_socket")\n'
+        prog += '\trq_pos = socket_get_var("POS","gripper_socket")\n'
+        # prog += '\trq_pos = socket_get_var("POS",1)\n'
+        prog += '\tsync()\n'
+        prog += "\tset_standard_analog_out(0, rq_pos / 255)\n"
+        prog += "\ttextmsg(rq_pos)\n"
+        prog += "end"
         self.send_program(prog)
 
     def set_tool_voltage(self, val):
@@ -270,15 +293,14 @@ class URRobot(object):
         prog = "{}([{},{},{},{},{},{}], a={}, t={})".format(command, *vels)
         self.send_program(prog)
 
-    def movej(self, joints, acc=0.1, vel=0.05, wait=True, relative=False,
-              threshold=None, radius=0):
+    def movej(self, joints, acc=0.1, vel=0.05, wait=True, relative=False, threshold=None):
         """
         move in joint space
         """
         if relative:
             l = self.getj()
             joints = [v + l[i] for i, v in enumerate(joints)]
-        prog = self._format_move("movej", joints, acc, vel, radius=radius)
+        prog = self._format_move("movej", joints, acc, vel)
         self.send_program(prog)
         if wait:
             self._wait_for_move(joints[:6], threshold=threshold, joints=True)
@@ -335,37 +357,6 @@ class URRobot(object):
             self.logger.debug("Received pose from robot: %s", pose)
         return pose
 
-    def get_gripper_pos(self, wait=False, _log=True):
-        """
-        test
-        """
-        # header = "def myProg():\n"
-        # end = "end\n"
-        # prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
-        # SOCKET_NAME)
-        # prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
-        # SOCKET_NAME)
-        # prog += end
-        # print('prog', prog)
-        # self.send_program(prog)
-
-        # pose = self.secmon.get_cartesian_info(wait)
-        # if pose:
-        # pose = [pose["X"], pose["Y"], pose["Z"],
-        # pose["Rx"], pose["Ry"], pose["Rz"]]
-        # if _log:
-        # self.logger.debug("Received pose from robot: %s", pose)
-        return pose
-
-    def getdata(self, wait=False, _log=True):
-        """
-        getalldata
-        """
-        data = self.secmon.get_all_data(wait)
-        if _log:
-            self.logger.debug("Received data dict from robot: %s", data)
-        return data
-
     def movec(self, pose_via, pose_to, acc=0.01, vel=0.01, wait=True, threshold=None):
         """
         Move Circular: Move to position (circular in tool-space)
@@ -393,7 +384,7 @@ class URRobot(object):
         """
         Concatenate several movex commands and applies a blending radius
         pose_list is a list of pose.
-        This method is useful since any new command from python
+        This method is usefull since any new command from python
         to robot make the robot stop
         """
         header = "def myProg():\n"
@@ -409,90 +400,6 @@ class URRobot(object):
         if wait:
             self._wait_for_move(target=pose_list[-1], threshold=threshold)
             return self.getl()
-
-    # NOTE: this is important
-    def throw_primitive(self, pose_list, wait=False, threshold=0.001):
-        radius = 0.2
-        header = "def myProg():\n"
-        end = "end\n"
-        acc = 1.2
-        vel = 1.2
-        prog = header
-        SOCKET_NAME = "gripper_socket"
-        # Activate gripper
-        prog += 'socket_open(\"{}\",{},\"{}\"\n)'.format("127.0.0.1",
-                                                         63352, SOCKET_NAME)
-        prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
-                                                            SOCKET_NAME)
-        prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
-                                                            SOCKET_NAME)
-        for idx, pose_val in enumerate(pose_list):
-            print(str(pose_val))
-            if idx == (len(pose_list) - 1):
-                print('last 1')
-                radius = 0.00
-            if str(pose_val) == 'open':
-                print('hi opening')
-                SOCKET_NAME = "gripper_socket"
-                prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
-                                                                    SOCKET_NAME)
-            else:
-                pose_type = str(pose_val[0])
-                pose = [float(i) for i in pose_val[1:]]
-                if pose_type == 'j':
-                    prog += self._format_move(
-                        "movel", pose, acc, vel, radius) + "\n"
-                elif pose_type == 'p':
-                    prog += self._format_move(
-                        'movel', pose, acc, vel, radius, prefix="p") + "\n"
-        prog += end
-        print('prog', prog)
-        self.send_program(prog)
-
-        if wait:
-            final_pose = [float(i) for i in pose_val[1:]]
-            print(final_pose)
-            self._wait_for_move(target=final_pose, threshold=threshold)
-            return self.getl()
-
-        # self.move_to(start_position, start_axisangle, acc_scaling=K,
-        # vel_scaling=K, radius=0)  # last # is blend radius
-        # # , acc_scaling=K, vel_scaling=K, radius=0)  # last # is blend radius
-        # self.move_joints(curled_config)
-        # self.move_to(end_position, end_axisangle, acc_scaling=K,
-        # vel_scaling=K, radius=0.5)  # last # is blend radius
-
-    # def _format_move(self, command, tpose, acc, vel, radius=0, prefix=""):
-    # tpose = [round(i, self.max_float_length) for i in tpose]
-    # tpose.append(acc)
-    # tpose.append(vel)
-    # tpose.append(radius)
-    # return "{}({}[{},{},{},{},{},{}], a={}, v={}, r={})".format(command, prefix, *tpose)
-
-   # def _socket_set_var(self, var, value, socket_name):
-   # msg = "socket_set_var(\"{}\",{},\"{}\")".format(var, value, socket_name)  # noqa
-   # self.add_line_to_program(msg)
-   # self._sync()
-
-   # def _set_gripper_position(self, value):
-   # """
-   # SPE is the variable
-   # range is 0 - 255
-   # 0 is no speed
-   # 255 is full speed
-   # """
-   # value = self._constrain_unsigned_char(value)
-   # self._socket_set_var(POS, value, self.socket_name)
-
-   # tcp_command += " set_digital_out(8,False)\n"
-   # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.09)\n" \
-   # % (position[0], position[1], position[2] + 0.1, tool_orientation[0],
-   # tool_orientation[1], 0.0, self.joint_acc * 0.5, self.joint_vel * 0.5)
-   # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.00)\n" \
-   # % (position[0], position[1], position[2], tool_orientation[0],
-   # tool_orientation[1], 0.0, self.joint_acc * 0.1, self.joint_vel * 0.1)
-   # tcp_command += " set_digital_out(8,True)\n"
-   # tcp_command += "end\n"
 
     def stopl(self, acc=0.5):
         self.send_program("stopl(%s)" % acc)
@@ -545,22 +452,15 @@ class URRobot(object):
         self.rtmon.set_csys(self.csys)
         return self.rtmon
 
-    def translate(self, vect, acc=0.01, vel=0.01, wait=True, command="movel",
-                  relative=True, threshold=None):
+    def translate(self, vect, acc=0.01, vel=0.01, wait=True, command="movel"):
         """
         move tool in base coordinate, keeping orientation
         """
         p = self.getl()
-        if relative:
-            p[0] += vect[0]
-            p[1] += vect[1]
-            p[2] += vect[2]
-        else:
-            p[0] = vect[0]
-            p[1] = vect[1]
-            p[2] = vect[2]
-        return self.movex(command, p, vel=vel, acc=acc, wait=wait,
-                          threshold=threshold)
+        p[0] += vect[0]
+        p[1] += vect[1]
+        p[2] += vect[2]
+        return self.movex(command, p, vel=vel, acc=acc, wait=wait)
 
     def up(self, z=0.05, acc=0.01, vel=0.01):
         """

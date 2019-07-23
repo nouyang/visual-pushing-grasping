@@ -137,6 +137,10 @@ class URScript(object):
         self.add_line_to_program(msg)
         self._sync()
 
+    def _socket_send_msg(self, message, socket_name):
+        msg = message
+        self.add_line_to_program(msg)
+
     def _socket_set_var(self, var, value, socket_name):
         msg = "socket_set_var(\"{}\",{},\"{}\")".format(var, value, socket_name)  # noqa
         self.add_line_to_program(msg)
