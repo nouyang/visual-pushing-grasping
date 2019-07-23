@@ -23,6 +23,9 @@ visualization.push.png
 visualization.grasp.png
 
 *.swp
+*.swn
+*.swo
+
 
 *.pth*
 
