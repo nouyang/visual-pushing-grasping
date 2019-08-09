@@ -31,7 +31,8 @@ workspace_limits = np.asarray(
 
 # Initialize robot and move to home pose
 # NOTE: IMPORTANT!!! ROBOT WILL GO HERE FIRST AT RAPID SPEED
-home = np.asarray([90., -45., 90., -098.9, -90., 0.]) * np.pi / 180.0
+home = np.asarray([0., -42., 85., -058.9, -90., 0.])*np.pi/180.0
+# home = np.asarray([0., -45., 90., -050.9, -90., 0.]) * np.pi / 180.0
 print('home', home)
 
 robot = Robot(False, False, None, workspace_limits,

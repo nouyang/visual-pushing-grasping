@@ -347,52 +347,57 @@ class URcomm(object):
         self.combo_move(throw_pose_list, wait=True, is_sim=is_sim)
 
     def throw_andy(self, wait=True, is_sim=False):
-        default_jacc = 8.  # 8.0
-        default_jvel = 3.0  # 3.0
-        toss_jacc = 25.  # 25.0
-        toss_jvel = 3.2  # 3.2
-        pretoss_jconf = np.asarray(
-            [90., -45., 90., -098.9, -90., 0.])*np.pi/180.0
-        posttoss_jconf = np.asarray(
-            # [90., -057.8, 035.1, -142.1, -90., 0.])*np.pi/180.0
-            # JOINT 3 IS THE PROBLEM
-            [90., -057.8, 035.1, -142.1, -90., 0.])*np.pi/180.0
-        # [90., -057.8, 90, -142.1, -90., 0.])*np.pi/180.0
-        pretoss_blend_radius = 0.09
+        default_jacc = 8.
+        default_jvel = 10.0
+        toss_jacc = 30  # 25.
+        toss_jvel = 10.4  # 3.2
+        pretoss_jconf = \
+            # np.asarray([0., -42., 85., -058.9, -90., 0.])*np.pi/180.0
+        [0., -45., 90., -098.9, -90., 0.])*np.pi/180.0  # per email
+        posttoss_jconf=np.asarray(
+            [0., -42., 85., -162.1, -90., 0.])*np.pi/180.0
+        # [0., -057.8, 035.1, -142.1, -90., 0.])*np.pi/180.0  # per email
+        # [0., -060.8, 040.1, -142.1, -90., 0.])*np.pi/180.0
+        pretoss_blend_radius=0.09  # TODO: this does get used at all?
         # toss_blend_radius = 0.7 # BLEND FAIL
-        # toss_blend_radius = 0.6 # CAUSES CRUNCH SOUND ON WAY UP
-        # toss_blend_radius = 0.005 # FINE
-        toss_blend_radius = 0.6  # FINE
-        # toss_blend_radius = 0.5
+        toss_blend_radius=0.55
+        toss_blend_radius=0.05
 
-        tcp_msg = "def process():\n"
+        tcp_msg="def process():\n"
         tcp_msg += '    socket_open("127.0.0.1",63352,"gripper_socket")\n'
-        tcp_msg += "    sync()\n"
-        # tcp_msg += self._format_move("movej", pretoss_jconf, default_jacc,
-        # default_jvel, pretoss_blend_radius, time=0, prefix="") + "\n"
-        # tcp_msg += self._format_move("movej", posttoss_jconf, toss_jacc,
-        # toss_jvel, toss_blend_radius, time=0, prefix="") + "\n"
+        tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
+                                                                   self.socket_name)
+        tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("FOR", 0,
+                                                                   self.socket_name)
         tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % (pretoss_jconf[0], pretoss_jconf[1], pretoss_jconf[2],
                                                                               pretoss_jconf[3], pretoss_jconf[4], pretoss_jconf[5], default_jacc, default_jvel, pretoss_blend_radius)
         tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % (posttoss_jconf[0], posttoss_jconf[1],
                                                                               posttoss_jconf[2], posttoss_jconf[3], posttoss_jconf[4], posttoss_jconf[5], toss_jacc, toss_jvel, toss_blend_radius)
         # tcp_msg += '    set_digital_out(8,False)\n'  # for RG2 gripper
-        tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
-                                                                   self.socket_name)
         tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
                                                                    self.socket_name)
         # tcp_msg += "    sync()\n"
-        # tcp_msg += self._format_move("movej", pretoss_jconf, default_jacc,
-        # default_jvel, radius=0, time=0, prefix="") + "\n"
         tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=0.0)\n' % (pretoss_jconf[0], pretoss_jconf[1],
-                                                                               pretoss_jconf[2], pretoss_jconf[3], pretoss_jconf[4], pretoss_jconf[5], default_jacc, default_jvel)
+                                                                               pretoss_jconf[2],
+                                                                               pretoss_jconf[3],
+                                                                               pretoss_jconf[4],
+                                                                               pretoss_jconf[5],
+                                                                               default_jacc,
+                                                                               default_jvel)
         tcp_msg += '    socket_close("gripper_socket")\n'
         tcp_msg += 'end\n'
-        self.send_program(tcp_msg, is_sim=is_sim)
+        self.send_program(tcp_msg, is_sim = is_sim)
+
+        # tcp_msg += self._format_move("movej", pretoss_jconf, default_jacc,
+        # default_jvel, pretoss_blend_radius, time=0, prefix="") + "\n"
+        # tcp_msg += self._format_move("movej", posttoss_jconf, toss_jacc,
+        # toss_jvel, toss_blend_radius, time=0, prefix="") + "\n"
+        # tcp_msg += self._format_move("movej", pretoss_jconf, default_jacc,
+        # default_jvel, radius=0, time=0, prefix="") + "\n"
 
         if wait:
-            joint_flag = True
-            self._wait_for_move(target=pretoss_jconf,
+            joint_flag=True
+            self._wait_for_move(target = pretoss_jconf,
                                 threshold=self.pose_tolerance, joints=joint_flag)
             return self.get_state('cartesian_info')
 
