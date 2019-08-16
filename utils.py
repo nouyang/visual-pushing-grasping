@@ -58,11 +58,15 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     sort_z_ind = np.argsort(surface_pts[:, 2])
     surface_pts = surface_pts[sort_z_ind]
     color_pts = color_pts[sort_z_ind]
+    print('avg surface points after undistory height',
+          np.average(surface_pts[:, 2]))
 
     # Filter out surface points outside heightmap boundaries
     heightmap_valid_ind = np.logical_and(np.logical_and(np.logical_and(np.logical_and(surface_pts[:, 0] >= workspace_limits[0][0], surface_pts[:, 0] < workspace_limits[
                                          0][1]), surface_pts[:, 1] >= workspace_limits[1][0]), surface_pts[:, 1] < workspace_limits[1][1]), surface_pts[:, 2] < workspace_limits[2][1])
     surface_pts = surface_pts[heightmap_valid_ind]
+    print('avg surface points after undistory height',
+          np.average(surface_pts[:, 2]))
     color_pts = color_pts[heightmap_valid_ind]
 
     # Create orthographic top-down-view RGB-D heightmaps
@@ -85,8 +89,16 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     depth_heightmap[heightmap_pix_y, heightmap_pix_x] = surface_pts[:, 2]
     z_bottom = workspace_limits[2][0]
     depth_heightmap = depth_heightmap - z_bottom
+    print('avg depth after zeroing against workspace floor',
+          np.average(depth_heightmap))
+    print('depth map', depth_heightmap)
+
     depth_heightmap[depth_heightmap < 0] = 0
+    print('-z bottom', -z_bottom)
+    print('avg depth after deleting neg heights', np.average(depth_heightmap))
+    print('where is it equal', depth_heightmap[depth_heightmap == -z_bottom])
     depth_heightmap[depth_heightmap == -z_bottom] = np.nan
+    print('avg depth after zeroing', np.average(depth_heightmap))
 
     return color_heightmap, depth_heightmap
 

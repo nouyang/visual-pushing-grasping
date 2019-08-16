@@ -24,7 +24,7 @@ cam_intrinsics = camera.intrinsics
 print(cam_depth_scale, cam_intrinsics)
 
 workspace_limits = np.asarray(
-    [[-0.710, -0.360], [-0.115, 0.235], [-0.400, -0.310]])  # with gripper horizontal
+    [[-0.710, -0.360], [-0.115, 0.235], [-0.450, -0.310]])  # with gripper horizontal
 # [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.300]])  # with gripper vertical
 
 # Cam intrinsices are sent by camera directly
@@ -37,15 +37,18 @@ workspace_limits = np.asarray(
 color_img, depth_img = camera.get_data()
 print('color image shape', color_img.shape)
 depth_img = depth_img * cam_depth_scale
+print('depthimage shape', depth_img.shape)
+print('avg depth', np.average(depth_img))
 k = 1.
 # Scale image, to change heightmap resolution, so resultant image is 224x224
 color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
 depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
-heightmap_resolution = 0.001*(1./k)
+heightmap_resolution = 0.002*(1./k)
 # depth_img = depth_img.astype(float) * depth_scale
 
 color_heightmap, depth_heightmap = utils.get_heightmap(
     color_img, depth_img, cam_intrinsics, cam_pose, workspace_limits, heightmap_resolution)
+print('avg ndistorted depth', np.average(depth_heightmap))
 
 valid_depth_heightmap = depth_heightmap.copy()
 valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
