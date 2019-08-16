@@ -53,7 +53,8 @@ def main(args):
 
         # NOTE: D415 foam (should this include the bin?)
         workspace_limits = np.asarray(
-            [[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
+             [[-0.584,-0.380], [.100, 0.325], [-0.250, -0.100]])
+            #[[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
         # [[0.360, 0.620], [-0.200, 0.170], [0.080, 0.300]])
         # [[0.340, 0.500], [-0.200, 0.170], [0.185, 0.300]])
 
@@ -94,11 +95,13 @@ def main(args):
 
     # Set random seed
     np.random.seed(random_seed)
+    
+    home_rad = np.deg2rad([-56.64, -42.13, 99.02, -47.60, -327.37, -1.45])
 
     # Initialize pick-and-place system (camera and robot)
     robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
                   tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-                  is_testing, test_preset_cases, test_preset_file)
+                  is_testing, test_preset_cases, test_preset_file, home_joint_config=home_rad)
 
     # Initialize trainer
     trainer = Trainer(method, push_rewards, future_reward_discount,
@@ -299,6 +302,7 @@ def main(args):
         depth_img = depth_img * robot.cam_depth_scale
 
         # Get heightmap from RGB-D image (by re-projecting 3D point cloud)
+        print("Thsi is the heightmap res", heightmap_resolution)
         color_heightmap, depth_heightmap = utils.get_heightmap(
             color_img, depth_img, robot.cam_intrinsics, robot.cam_pose, workspace_limits, heightmap_resolution)
         valid_depth_heightmap = depth_heightmap.copy()
@@ -537,7 +541,7 @@ if __name__ == '__main__':
                         default=False,                                    help='run in simulation?')
     parser.add_argument('--obj_mesh_dir', dest='obj_mesh_dir', action='store', default='objects/blocks',
                         help='directory containing 3D mesh files (.obj) of objects to be added to simulation')
-    parser.add_argument('--num_obj', dest='num_obj', type=int, action='store', default=10,
+    parser.add_argument('--num_obj', dest='num_obj', type=int, action='store', default=5,
                         help='number of objects to add to simulation')
     parser.add_argument('--tcp_host_ip', dest='tcp_host_ip', action='store', default='100.127.7.223',
                         help='IP address to robot arm as TCP client (UR5)')
@@ -548,7 +552,7 @@ if __name__ == '__main__':
     parser.add_argument('--rtc_port', dest='rtc_port', type=int, action='store', default=30003,
                         help='port to robot arm as real-time client (UR5)')
     parser.add_argument('--heightmap_resolution', dest='heightmap_resolution',
-                        type=float, action='store', default=0.002, help='meters per pixel of heightmap')
+                        type=float, action='store', default=0.0015, help='meters per pixel of heightmap')
     parser.add_argument('--random_seed', dest='random_seed', type=int, action='store', default=1234,
                         help='random seed for simulation and neural net initialization')
     parser.add_argument('--cpu', dest='force_cpu', action='store_true', default=False,

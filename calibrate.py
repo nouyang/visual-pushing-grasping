@@ -10,13 +10,17 @@ from robot import Robot
 from scipy import optimize
 from mpl_toolkits.mplot3d import Axes3D
 
+import logging
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+
 # User options (change me)
 # --------------- Setup options ---------------
 # tcp_host_ip = '100.127.7.223' # IP and port to robot arm as TCP client (UR5)
-tcp_host_ip = "10.75.15.94"
+tcp_host_ip = "10.75.15.91"
 tcp_port = 30002
 # rtc_host_ip = '100.127.7.223' # IP and port to robot arm as real-time client (UR5)
-rtc_host_ip = "10.75.15.94"
+rtc_host_ip = "10.75.15.91"
 rtc_port = 30003
 
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
@@ -39,21 +43,26 @@ workspace_limits = np.asarray(  # smaller true-ish (63 pts)
 # direction..
 """
 workspace_limits = np.asarray(
-    [[0.400, 0.600], [-0.250, 0.150], [0.100, 0.300]])
+    [[-0.584,-0.380], [.100, 0.325], [-0.250, -0.100]])
 
 # calib_grid_step = 0.05
-calib_grid_step = 0.15
+#calib_grid_step = 0.15
+
+calib_grid_step = 0.2
+
+
+
 # checkerboard_offset_from_tool = [0, -0.13, 0.02] # ORIGINAL
 
 # NOTE: measured
-checkerboard_offset_from_tool = [0.157, 0.000, 0.010]  # gripper is 2cm high
+checkerboard_offset_from_tool = [0.090, 0.000, 0.020]  # gripper is 2cm high
 
 # Original
 # tool_orientation = [-np.pi/2, 0, 0]
 
 # NOTE: Mine is experimentally measured (from TCP pose status)
 # NOTE: Can I provide this in not-axis angle?
-tool_orientation = [-1.22, 1.19, -1.17]
+tool_orientation = [1.19, -1.26, -1.22]
 # from pendant, this is equivalent to 0, pi/2, pi
 # ---------------------------------------------
 
@@ -75,17 +84,20 @@ calib_grid_z.shape = (num_calib_grid_pts, 1)
 calib_grid_pts = np.concatenate(
     (calib_grid_x, calib_grid_y, calib_grid_z), axis=1)
 
+print(len(calib_grid_pts))
+
 measured_pts = []
 observed_pts = []
 observed_pix = []
 
+home_in_rad = np.deg2rad(np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
 # Move robot to home pose
 print('Connecting to robot...')
 robot = Robot(False, False, None, workspace_limits,
               tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-              False, None, None)
+              False, None, None, home_joint_config = home_in_rad)
 print('!------------ Initialized robot -------------------- \n\n')
-robot.close_gripper()
+#robot.close_gripper()
 print('!------ Gripper Closed, moving gripper so checkerboard is facing up\n\n')
 
 # Slow down robot
@@ -95,13 +107,15 @@ robot.joint_vel = 0.150
 # robot.joint_vel = 1.05
 
 # Make robot gripper point upwards
-robot.move_joints([-np.pi, -np.pi/2, np.pi/2, 0, np.pi/2, np.pi])
+robot.r.move_joints(np.deg2rad([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
+#robot.r.move_joints([-np.pi, -np.pi/2, np.pi/2, 0, np.pi/2, np.pi])
 print('!--------------- Moved gripper to point upward -------------------- \n\n')
 
 # Move robot to each calibration point in workspace
 print('Collecting data...')
 start = time.time()
 print('num calib pts', num_calib_grid_pts)
+
 for calib_pt_idx in range(num_calib_grid_pts):
     tool_position = calib_grid_pts[calib_pt_idx, :]
 
@@ -110,7 +124,7 @@ for calib_pt_idx in range(num_calib_grid_pts):
     dt = time.time() - start
     print('!- Elapsed Time: ' + str(dt) + ' secs  ----- \n\n')
 
-    robot.move_to(tool_position, tool_orientation)
+    robot.r.move_to(tool_position, tool_orientation)
     time.sleep(1)
 
     # Find checkerboard center
@@ -166,7 +180,7 @@ for calib_pt_idx in range(num_calib_grid_pts):
 
 # Move robot back to home pose
 print('!--------------------- Going home now -------------------- \n\n')
-robot.go_home()
+robot.r.go_home()
 print('!--------------------- Homed -------------------- \n\n')
 
 measured_pts = np.asarray(measured_pts)
@@ -203,7 +217,9 @@ def get_rigid_transform_error(z_scale):
 
     # NOTE: Camera intrinsics supplied by realsense camera over TCP
     # Apply z offset and compute new observed points using camera intrinsics
+    print(observed_pts)
     observed_z = observed_pts[:, 2:] * z_scale
+    print(observed_pts)
     observed_x = np.multiply(observed_pix[:, [
                              0]]-robot.cam_intrinsics[0][2], observed_z/robot.cam_intrinsics[0][0])
     observed_y = np.multiply(observed_pix[:, [

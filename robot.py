@@ -21,7 +21,7 @@ class Robot(object):
                  home_joint_config=None):
 
         self.is_sim = is_sim
-
+ 
         # If in simulation...
         if self.is_sim:
             pass
@@ -65,7 +65,7 @@ class Robot(object):
 
             # port is assumed to be 30002
             self.r = URcomm(tcp_host_ip, self.joint_vel,
-                            self.joint_acc, home_joint_config)
+                            self.joint_acc, home_joint_config, workspace_limits = workspace_limits)
 
             # Move robot to home pose
             self.r.go_home()
@@ -73,8 +73,8 @@ class Robot(object):
             # self.r.close_gripper()
             # self.r.open_gripper()
 
-            '''
-            # Fetch RGB-D data from RealSense camera
+            
+            #Fetch RGB-D data from RealSense camera
             self.camera = Camera()
             self.cam_intrinsics = self.camera.intrinsics
 
@@ -82,7 +82,7 @@ class Robot(object):
             self.cam_pose = np.loadtxt("real/camera_pose.txt", delimiter=" ")
             self.cam_depth_scale = np.loadtxt(
                 "real/camera_depth_scale.txt", delimiter=" ")
-            '''
+            
 
     def get_camera_data(self):
 
@@ -149,7 +149,7 @@ class Robot(object):
             # position
             # TODO: FIX
             # tool_orientation = [2.21, 2.19, -0.04]
-            tool_orientation = [2.22, -2.22, 0]
+            tool_orientation = [1.19, -1.26, -1.22]
             tilted_tool_orientation = tool_orientation
             # Attempt grasp
             print('!--- Attempting to open gripper, then go down & close --!')
@@ -226,8 +226,8 @@ class Robot(object):
             # home_position = [0.400, -0.100, 0.420]
             # D435 home_position = [0.254, 0.218, 0.434]
             # D415
-            home_position = [0.360, 0.180, 0.504]
-            home_orientation = [2.78, -1.67, 0.17]
+            home_position = [-0.464, -0.097, -0.151]
+            home_orientation = [1.19, -1.26, -1.22]
 
             # If gripper is open, drop object in bin and check if grasp is successful
             # grasp_success = False
