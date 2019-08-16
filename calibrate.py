@@ -11,8 +11,8 @@ from scipy import optimize
 from mpl_toolkits.mplot3d import Axes3D
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
-# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 # User options (change me)
 # --------------- Setup options ---------------
@@ -43,18 +43,18 @@ workspace_limits = np.asarray(  # smaller true-ish (63 pts)
 # direction..
 """
 workspace_limits = np.asarray(
-    [[-0.500, -0.400], [-0.000, 0.100], [-0.200, -0.100]])
+    [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])
 
 # calib_grid_step = 0.05
 #calib_grid_step = 0.15
 
-calib_grid_step = 0.05
+calib_grid_step = 0.1
 
 
 # checkerboard_offset_from_tool = [0, -0.13, 0.02] # ORIGINAL
 
 # NOTE: measured
-checkerboard_offset_from_tool = [0.090, 0.000, 0.020]  # gripper is 2cm high
+checkerboard_offset_from_tool = [-0.090, 0.000, 0.020]  # gripper is 2cm high
 
 # Original
 # tool_orientation = [-np.pi/2, 0, 0]
@@ -118,6 +118,8 @@ print('Collecting data...')
 start = time.time()
 print('num calib pts', num_calib_grid_pts)
 
+time.sleep(1)
+
 for calib_pt_idx in range(num_calib_grid_pts):
     tool_position = calib_grid_pts[calib_pt_idx, :]
 
@@ -163,12 +165,12 @@ for calib_pt_idx in range(num_calib_grid_pts):
         # TODO: Is this offset in the right direction?
         # TODO: Is this offset from the gripper jaws or from the tool of the
         # robot?
-        tool_position = tool_position + checkerboard_offset_from_tool
+        checker_position = tool_position + checkerboard_offset_from_tool
 
-        print('I measured (calculated)', tool_position)
+        print('I measured (calculated)', checker_position)
         print('I observed (realsense)', checkerboard_x, checkerboard_y,
               checkerboard_z)
-        measured_pts.append(tool_position)
+        measured_pts.append(checker_position)
         observed_pix.append(checkerboard_pix)
 
         # Draw and display the corners

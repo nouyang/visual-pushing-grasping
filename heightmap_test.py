@@ -20,23 +20,26 @@ camera = Camera()
 cam_pose = np.loadtxt("real/camera_pose.txt", delimiter=" ")
 cam_depth_scale = np.loadtxt(
     "real/camera_depth_scale.txt", delimiter=" ")
+cam_intrinsics = camera.intrinsics
+print(cam_depth_scale, cam_intrinsics)
 
 workspace_limits = np.asarray(
-    [[-0.660, -0.310], [-0.115, 0.235], [-0.400, -0.310]])  # with gripper up
-# [[-0.770, -0.420], [-0.125, 0.225], [-0.400, -0.310]]) # with gripper down
+    # [[-0.710, -0.360], [-0.115, 0.235], [-0.400, -0.310]])  # with gripper horizontal
+    [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.300]])  # with gripper vertical
 
-cam_intrinsics = np.array([[920.723,   0., 653.2795],
-                           [0., 920.02124, 362.55386],
-                           [0.,   0.,   1.]])
+# Cam intrinsices are sent by camera directly
+# cam_intrinsics = np.array([[920.723,   0., 653.2795],
+# [0., 920.02124, 362.55386],
+# [0.,   0.,   1.]])
 
 # color_img = cv2.imread('color.png', 0)
 # depth_img = cv2.imread('depth.png', 0)
-depth_scale = np.array(0.99453125)
 color_img, depth_img = camera.get_data()
-depth_img = depth_img * depth_scale
-# color_img = cv2.resize(color_img, (0, 0), fx=0.2, fy=0.7)
-# depth_img = cv2.resize(depth_img, (0, 0), fx=0.2, fy=0.7)
-heightmap_resolution = 0.001
+depth_img = depth_img * cam_depth_scale
+k = 0.64
+color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
+depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
+heightmap_resolution = 0.001*(1./k)
 # depth_img = depth_img.astype(float) * depth_scale
 
 color_heightmap, depth_heightmap = utils.get_heightmap(
