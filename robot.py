@@ -21,7 +21,7 @@ class Robot(object):
                  home_joint_config=None):
 
         self.is_sim = is_sim
- 
+
         # If in simulation...
         if self.is_sim:
             pass
@@ -65,7 +65,7 @@ class Robot(object):
 
             # port is assumed to be 30002
             self.r = URcomm(tcp_host_ip, self.joint_vel,
-                            self.joint_acc, home_joint_config, workspace_limits = workspace_limits)
+                            self.joint_acc, home_joint_config, workspace_limits=workspace_limits)
 
             # Move robot to home pose
             self.r.go_home()
@@ -73,8 +73,7 @@ class Robot(object):
             # self.r.close_gripper()
             # self.r.open_gripper()
 
-            
-            #Fetch RGB-D data from RealSense camera
+            # Fetch RGB-D data from RealSense camera
             self.camera = Camera()
             self.cam_intrinsics = self.camera.intrinsics
 
@@ -82,7 +81,6 @@ class Robot(object):
             self.cam_pose = np.loadtxt("real/camera_pose.txt", delimiter=" ")
             self.cam_depth_scale = np.loadtxt(
                 "real/camera_depth_scale.txt", delimiter=" ")
-            
 
     def get_camera_data(self):
 
@@ -99,17 +97,21 @@ class Robot(object):
 
     def grasp_object(self, position, orientation):
         # throttle z position
+        grasping_gripper_height_from_tcp = 0.155
         # position[2] = max(position[2] - 0.050, self.workspace_limits[2][0])
-        position[2] = max(position[2] - 0.050, self.moveto_limits[2][0])
+        # TODO: Fix the limits / maxing for safety 
+        print('grasp prediction z:', position[2])
+        position[2] = max(position[2], self.r.moveto_limits[2][0])
+        # grasping_gripper_height_from_tcp)
 
-        self.open_gripper()
+        self.r.open_gripper()
         # move fast to right above the object
         # height of gripper?
-        self.move_to([position[0], position[1], position[2] + 0.150],
-                     orientation)
+        self.r.move_to([position[0], position[1], position[2] + 0.100],
+                       orientation)
         # then slowly move down
         self.move_to(position, orientation,
-                     acc_scaling=0.5, vel_scaling=0.1)
+                     vel=0.5*self.joint_vel, acc=0.1*self.joint_acc)
         # and grasp it
         self.close_gripper()
 
@@ -125,7 +127,7 @@ class Robot(object):
             # I GUESS THIS IS KIND OF IMPORTANT
             # It would be nice to specify in terms of ... pis, and not rx ry rz
         else:
-            grasp_orientation = [1.0, 0.0]
+            # grasp_orientation = [1.0, 0.0]
             '''
             if heightmap_rotation_angle > np.pi:
                 heightmap_rotation_angle = heightmap_rotation_angle - 2*np.pi
@@ -147,9 +149,9 @@ class Robot(object):
                 tilted_tool_orientation_axis_angle[1:4])
             '''
             # position
-            # TODO: FIX
-            # tool_orientation = [2.21, 2.19, -0.04]
-            tool_orientation = [1.19, -1.26, -1.22]
+            # TODO: GRASP  ORIENTATION
+            # tool_orientation = [1.19, -1.26, -1.22]
+            tool_orientation = [2.23, 2.30, -0.03]
             tilted_tool_orientation = tool_orientation
             # Attempt grasp
             print('!--- Attempting to open gripper, then go down & close --!')
@@ -220,14 +222,16 @@ class Robot(object):
             # bin_position = [0.5, -0.45, 0.1]
 
             # NOTE: mine
-            bin_position = [0.580, -0.040, 0.300]
+            # bin_position = [0.580, -0.040, 0.300]
+            bin_position = [-0.500, 0.279, -0.160]
             # home_position = [0.400, 0.000, 0.260]
             # NOTE: mine, and doesn't block the view
             # home_position = [0.400, -0.100, 0.420]
             # D435 home_position = [0.254, 0.218, 0.434]
             # D415
-            home_position = [-0.464, -0.097, -0.151]
-            home_orientation = [1.19, -1.26, -1.22]
+            # home_position = [-0.464, -0.097, -0.151]
+            home_position = [-0.414, -0.266, -0.192]
+            home_orientation = [2.28, 2.26, -0.04]
 
             # If gripper is open, drop object in bin and check if grasp is successful
             # grasp_success = False

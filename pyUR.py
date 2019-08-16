@@ -10,7 +10,7 @@ __license__ = "LGPLv3"
 
 
 class URcomm(object):
-    def __init__(self, host, joint_vel, joint_acc, home_joint_config=None, workspace_limits = None):
+    def __init__(self, host, joint_vel, joint_acc, home_joint_config=None, workspace_limits=None):
 
         self.joint_vel = joint_vel
         self.joint_acc = joint_acc
@@ -26,10 +26,9 @@ class URcomm(object):
         # NOTE: this is for throw practice
         if home_joint_config is None:
             home_in_deg = np.array(
-		[-10.5, -50.5, 125., -71.9, -277.5, -1.4]) * 1.0
-                # [-107, -105, 130, -92, -44, -30]) * 1.0  # sideways # bent wrist 1 2
-                # [-197, -105, 130, -110, -90, -30]) * 1.0
-
+                [-10.5, -50.5, 125., -71.9, -277.5, -1.4]) * 1.0
+            # [-107, -105, 130, -92, -44, -30]) * 1.0  # sideways # bent wrist 1 2
+            # [-197, -105, 130, -110, -90, -30]) * 1.0
 
             # [-107, -105, 130, -110, -90, -30]) * 1.0  # sideways
             # [-107, -105, 130, -85, -90, -30]) * 1.0  # sideways bent wrist
@@ -38,10 +37,14 @@ class URcomm(object):
             self.home_joint_config = home_joint_config
         #self.logger.debug("Home config: " + self.home_joint_config)
 
-        #self.moveto_limits = (
+        # self.moveto_limits = (
          #   [[0.300, 0.600], [-0.250, 0.180], [0.195, 0.571]])
-	self.moveto_limits = workspace_limits
 
+        # self.moveto_limits = np.asarray(
+            # [[-0.700, -0.350], [-0.125, 0.225], [-0.290, -0.195]])  # grasp pos
+
+        self.moveto_limits = np.asarray(
+            [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])  # for calib
         # Tool pose tolerance for blocking calls (meters)
         # HACK lower tolerance for now 31 July,bent wrist move not completing
         # self.pose_tolerance = [0.002, 0.002, 0.002, 0.010, 0.010, 0.010]
@@ -129,6 +132,7 @@ class URcomm(object):
         prog += "\tset_standard_analog_out(0, rq_pos / 255)\n"
         prog += "end\n"
         self.send_program(prog)
+
         # TODO: do I need a slight delay here?
 
         tool_pos = self.get_state('tool_data')
@@ -209,7 +213,6 @@ class URcomm(object):
     # -- Move commands
 
     def move_to(self, position, orientation, vel=None, acc=None, radius=0, wait=True):
-	print("hiii")
         if vel is None:
             vel = self.joint_vel
         if acc is None:
@@ -228,9 +231,10 @@ class URcomm(object):
             prog += "end\n"
             self.send_program(prog)
         else:
-	    print('not safe')
-            self.logger.info("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
-                              position, self.moveto_limits)
+            print("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
+                  position, self.moveto_limits)
+            # self.logger.info("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
+            # position, self.moveto_limits)
         if wait:
             self._wait_for_move(np.concatenate((position, orientation)),
                                 joints=False)

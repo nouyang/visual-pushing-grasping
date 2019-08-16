@@ -52,11 +52,10 @@ def main(args):
             # [[0.340, 0.600], [-0.250, 0.150], [0.200, 0.460]])
 
         # NOTE: D415 foam (should this include the bin?)
+        # workspace_limits = np.asarray(
+            # [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
         workspace_limits = np.asarray(
-            [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
-        # [[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
-        # [[0.360, 0.620], [-0.200, 0.170], [0.080, 0.300]])
-        # [[0.340, 0.500], [-0.200, 0.170], [0.185, 0.300]])
+            [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.300]])  # calib pos
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
     random_seed = args.random_seed
@@ -96,7 +95,7 @@ def main(args):
     # Set random seed
     np.random.seed(random_seed)
 
-    home_rad = np.deg2rad([-56.64, -42.13, 99.02, -47.60, -327.37, -1.45])
+    home_rad = np.deg2rad([20.2, -26.6, 116.8, -183.3, 268.8, 20.2])
 
     # Initialize pick-and-place system (camera and robot)
     robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
