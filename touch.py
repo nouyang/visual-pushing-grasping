@@ -10,29 +10,30 @@ from robot import Robot
 
 # User options (change me)
 # --------------- Setup options ---------------
-tcp_host_ip = "10.75.15.94"  # IP and port to robot arm as TCP client (UR5)
-
+tcp_host_ip = "10.75.15.91"  # IP and port to robot arm as TCP client (UR5)
 tcp_port = 30002
-rtc_host_ip = "10.75.15.94"  # IP and port to robot arm as TCP client (UR5)
-rtc_port = 30003
+rtc_host_ip = "10.75.15.91"  # IP and port to robot arm as TCP client (UR5)
+rtc_port = 30001
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
-# workspace_limits = np.asarray([[0.3, 0.748], [-0.224, 0.224], [-0.255, -0.1]])
-# tool_orientation = [2.22, -2.22, 0]
 workspace_limits = np.asarray(
     [[0.400, 0.600], [-0.250, 0.150], [0.195, 0.460]])
 # tool_orientation = [-1.22, 1.19, -1.17]  # gripper facing upward, for calib
 tool_orientation = None
-# DEBUG NOTE: in robot.py, it should have
-# ---------------------------------------------
-# self.home_joint_config = [-np.pi, -(80/360.) * 2 * np.pi, np.pi/2,
-# -np.pi/2, -np.pi/2, 0]
 
+
+workspace_limits = np.asarray(
+    [[-0.710, -0.360], [-0.115, 0.235], [-0.400, -0.310]])  # with gripper horizontal
+
+home_in_rad = np.deg2rad(
+    # np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
+    np.array([-13.5, -25.5, 120.7, -90., 80., 0]))
+# Move robot to home pose
 
 # Move robot to home pose
 robot = Robot(False, None, None, workspace_limits,
               tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-              False, None, None)
-robot.open_gripper()
+              False, None, None, home_joint_config=home_in_rad)
+robot.r.open_gripper()
 
 # Slow down robot
 # robot.joint_acc = 1.4
@@ -70,7 +71,7 @@ def mouseclick_callback(event, x, y, flags, param):
         target_position = target_position[0:3, 0]
         print('Moving to ', target_position, ' with z offset of 0.200')
         target_position[2] += 0.200
-        # robot.move_to(target_position, tool_orientation)
+        robot.r.move_to(target_position, tool_orientation)
 
 
 # Show color and depth frames
