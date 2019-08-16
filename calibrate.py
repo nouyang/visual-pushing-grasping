@@ -11,8 +11,8 @@ from scipy import optimize
 from mpl_toolkits.mplot3d import Axes3D
 
 import logging
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 
 # User options (change me)
 # --------------- Setup options ---------------
@@ -43,13 +43,12 @@ workspace_limits = np.asarray(  # smaller true-ish (63 pts)
 # direction..
 """
 workspace_limits = np.asarray(
-    [[-0.584,-0.380], [.100, 0.325], [-0.250, -0.100]])
+    [[-0.500, -0.400], [-0.000, 0.100], [-0.200, -0.100]])
 
 # calib_grid_step = 0.05
 #calib_grid_step = 0.15
 
-calib_grid_step = 0.2
-
+calib_grid_step = 0.05
 
 
 # checkerboard_offset_from_tool = [0, -0.13, 0.02] # ORIGINAL
@@ -84,20 +83,22 @@ calib_grid_z.shape = (num_calib_grid_pts, 1)
 calib_grid_pts = np.concatenate(
     (calib_grid_x, calib_grid_y, calib_grid_z), axis=1)
 
-print(len(calib_grid_pts))
+print('Number grid points!', len(calib_grid_pts))
 
 measured_pts = []
 observed_pts = []
 observed_pix = []
 
-home_in_rad = np.deg2rad(np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
+home_in_rad = np.deg2rad(
+    # np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
+    np.array([-13.5, -25.5, 120.7, -90., 80., 0]))
 # Move robot to home pose
 print('Connecting to robot...')
 robot = Robot(False, False, None, workspace_limits,
               tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-              False, None, None, home_joint_config = home_in_rad)
+              False, None, None, home_joint_config=home_in_rad)
 print('!------------ Initialized robot -------------------- \n\n')
-#robot.close_gripper()
+# robot.close_gripper()
 print('!------ Gripper Closed, moving gripper so checkerboard is facing up\n\n')
 
 # Slow down robot
@@ -107,7 +108,8 @@ robot.joint_vel = 0.150
 # robot.joint_vel = 1.05
 
 # Make robot gripper point upwards
-robot.r.move_joints(np.deg2rad([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
+# robot.r.move_joints(np.deg2rad(
+# [-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
 #robot.r.move_joints([-np.pi, -np.pi/2, np.pi/2, 0, np.pi/2, np.pi])
 print('!--------------- Moved gripper to point upward -------------------- \n\n')
 

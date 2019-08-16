@@ -53,8 +53,8 @@ def main(args):
 
         # NOTE: D415 foam (should this include the bin?)
         workspace_limits = np.asarray(
-             [[-0.584,-0.380], [.100, 0.325], [-0.250, -0.100]])
-            #[[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
+            [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
+        # [[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
         # [[0.360, 0.620], [-0.200, 0.170], [0.080, 0.300]])
         # [[0.340, 0.500], [-0.200, 0.170], [0.185, 0.300]])
 
@@ -95,7 +95,7 @@ def main(args):
 
     # Set random seed
     np.random.seed(random_seed)
-    
+
     home_rad = np.deg2rad([-56.64, -42.13, 99.02, -47.60, -327.37, -1.45])
 
     # Initialize pick-and-place system (camera and robot)
@@ -303,6 +303,8 @@ def main(args):
 
         # Get heightmap from RGB-D image (by re-projecting 3D point cloud)
         print("Thsi is the heightmap res", heightmap_resolution)
+        print("Thsi is the intrinsics", robot.cam_intrinsics)
+        print("Thsi is the deph scale", robot.cam_depth_scale)
         color_heightmap, depth_heightmap = utils.get_heightmap(
             color_img, depth_img, robot.cam_intrinsics, robot.cam_pose, workspace_limits, heightmap_resolution)
         valid_depth_heightmap = depth_heightmap.copy()
