@@ -27,25 +27,7 @@ class Robot(object):
             pass
         # If in real-settings...
         else:
-            # self.r = urx.Robot(tcp_host_ip)
-            # self.r.set_tcp((0, 0, 0, 0, 0, 0))
-            # self.r.set_payload(0.5, (0, 0, 0))
-
             # self.gripper = Robotiq_Two_Finger_Gripper(self.r)
-
-            # NOTE: this is for D415
-            # home_in_deg = np.array(
-            # [-151.4, -93.7, 85.4, -90, -90, 0]) * 1.0
-
-            # Default home joint configuration
-            # NOTE: this is orig
-            # self.home_joint_config = [-(180.0/360.0)*2*np.pi, -(84.2/360.0)*2*np.pi,
-            # (112.8/360.0)*2*np.pi, -(119.7/360.0)*2*np.pi, -(90.0/360.0)*2*np.pi, 0.0]
-
-            # NOTE this is only for calibrate.py (reduce retry time) - #
-            # checkerboard flat and pointing up
-            # self.home_joint_config = [-np.pi, -
-            # np.pi/2, np.pi/2, 0, np.pi/2, np.pi]
 
             # Default joint speed configuration
             # self.joint_acc = 8 # Safe: 1.4
@@ -53,19 +35,16 @@ class Robot(object):
             self.joint_acc = 1.0  # Safe when set 30% spe71ed on pendant
             self.joint_vel = 0.7
 
-            # Default tool speed configuration
-            # self.tool_acc = 1.2 # Safe: 0.5
-            # self.tool_vel = 0.25 # Safe: 0.2
-            # self.tool_acc = 0.1  # Safe when set 30% speed on pendant
-            # self.tool_vtel = 0.1
-
             # Connect to robot client
             # self.tcp_host_ip = tcp_host_ip
             # self.tcp_port = tcp_port
 
-            # port is assumed to be 30002
+            # NOTE: port is assumed to be 30002
+            self.workspace_limits = workspace_limits
+
             self.r = URcomm(tcp_host_ip, self.joint_vel,
-                            self.joint_acc, home_joint_config, workspace_limits=workspace_limits)
+                            self.joint_acc, home_joint_config=home_joint_config,
+                            workspace_limits=workspace_limits)
 
             # Move robot to home pose
             self.r.go_home()
@@ -97,23 +76,23 @@ class Robot(object):
 
     def grasp_object(self, position, orientation):
         # throttle z position
-        grasping_gripper_height_from_tcp = 0.155
-        # position[2] = max(position[2] - 0.050, self.workspace_limits[2][0])
-        # TODO: Fix the limits / maxing for safety 
         print('grasp prediction z:', position[2])
-        position[2] = max(position[2], self.r.moveto_limits[2][0])
-        # grasping_gripper_height_from_tcp)
+        # NOTE: This is affected by workspace limits in get_heightmap!!!
+        position[2] = max(position[2], self.workspace_limits[2][0]) + 0.01
+
+        print('safetied grasp prediction z: ', position[2])
 
         self.r.open_gripper()
         # move fast to right above the object
         # height of gripper?
-        self.r.move_to([position[0], position[1], position[2] + 0.100],
+        self.r.move_to([position[0], position[1], position[2] + 0.155],
                        orientation)
         # then slowly move down
-        self.move_to(position, orientation,
-                     vel=0.5*self.joint_vel, acc=0.1*self.joint_acc)
+        print('position', position, 'orientation', orientation)
+        self.r.move_to(position, orientation)
+        # vel=0.5*self.joint_vel, acc=0.1*self.joint_acc)
         # and grasp it
-        self.close_gripper()
+        self.r.close_gripper()
 
     def grasp(self, position, heightmap_rotation_angle, workspace_limits):
         print('Executing: grasp at (%f, %f, %f)' %
@@ -151,7 +130,7 @@ class Robot(object):
             # position
             # TODO: GRASP  ORIENTATION
             # tool_orientation = [1.19, -1.26, -1.22]
-            tool_orientation = [2.23, 2.30, -0.03]
+            tool_orientation = [2.15, -2.25, -0.10]
             tilted_tool_orientation = tool_orientation
             # Attempt grasp
             print('!--- Attempting to open gripper, then go down & close --!')
@@ -223,7 +202,7 @@ class Robot(object):
 
             # NOTE: mine
             # bin_position = [0.580, -0.040, 0.300]
-            bin_position = [-0.500, 0.279, -0.160]
+            bin_position = [-0.550, -0.276, -0.150]
             # home_position = [0.400, 0.000, 0.260]
             # NOTE: mine, and doesn't block the view
             # home_position = [0.400, -0.100, 0.420]
@@ -231,7 +210,7 @@ class Robot(object):
             # D415
             # home_position = [-0.464, -0.097, -0.151]
             home_position = [-0.414, -0.266, -0.192]
-            home_orientation = [2.28, 2.26, -0.04]
+            home_orientation = [2.28, -2.26, -0.04]
 
             # If gripper is open, drop object in bin and check if grasp is successful
             # grasp_success = False
@@ -248,11 +227,12 @@ class Robot(object):
 
                 # Attempt placing in bin
                 print("attempting to drop into bin and then go home")
-                self.move_to(bin_position, None)
-                self.open_gripper()
+                self.r.move_to(bin_position, None, override_safety=True)
+                self.r.open_gripper()
 
                 print('Going home now')
-                self.move_to(home_position, home_orientation)
+                self.r.move_to(home_position, home_orientation,
+                               override_safety=True)
 
                 # NOTE: original code separates into approach and throw (tilted) parts
                 '''

@@ -55,7 +55,8 @@ def main(args):
         # workspace_limits = np.asarray(
             # [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
         workspace_limits = np.asarray(
-            [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.300]])  # calib pos
+            [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
+        # [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.220]])  # calib pos
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
     random_seed = args.random_seed
@@ -95,12 +96,14 @@ def main(args):
     # Set random seed
     np.random.seed(random_seed)
 
-    home_rad = np.deg2rad([20.2, -26.6, 116.8, -183.3, 268.8, 20.2])
+    # home_rad = np.deg2rad([20.2, -26.6, 116.8, -183.3, 268.8, 20.2])
+    home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 198.4])
 
     # Initialize pick-and-place system (camera and robot)
     robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
                   tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-                  is_testing, test_preset_cases, test_preset_file, home_joint_config=home_rad)
+                  is_testing, test_preset_cases, test_preset_file,
+                  home_joint_config=home_rad)
 
     # Initialize trainer
     trainer = Trainer(method, push_rewards, future_reward_discount,

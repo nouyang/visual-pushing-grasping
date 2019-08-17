@@ -27,24 +27,21 @@ class URcomm(object):
         if home_joint_config is None:
             home_in_deg = np.array(
                 [-10.5, -50.5, 125., -71.9, -277.5, -1.4]) * 1.0
-            # [-107, -105, 130, -92, -44, -30]) * 1.0  # sideways # bent wrist 1 2
-            # [-197, -105, 130, -110, -90, -30]) * 1.0
-
-            # [-107, -105, 130, -110, -90, -30]) * 1.0  # sideways
-            # [-107, -105, 130, -85, -90, -30]) * 1.0  # sideways bent wrist
             self.home_joint_config = np.deg2rad(home_in_deg)
         else:
             self.home_joint_config = home_joint_config
-        #self.logger.debug("Home config: " + self.home_joint_config)
+        self.logger.debug("Home config: " + str(self.home_joint_config))
 
         # self.moveto_limits = (
-         #   [[0.300, 0.600], [-0.250, 0.180], [0.195, 0.571]])
+        #   [[0.300, 0.600], [-0.250, 0.180], [0.195, 0.571]])
 
         # self.moveto_limits = np.asarray(
-            # [[-0.700, -0.350], [-0.125, 0.225], [-0.290, -0.195]])  # grasp pos
+        # [[-0.700, -0.350], [-0.125, 0.225], [-0.290, -0.195]])  # grasp pos
 
-        self.moveto_limits = np.asarray(
-            [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])  # for calib
+        self.A_moveto_limits = workspace_limits
+        print('in urcomm init we have limits', self.A_moveto_limits)
+        # self.moveto_limits = np.asarray(
+        # [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])  # for calib
         # Tool pose tolerance for blocking calls (meters)
         # HACK lower tolerance for now 31 July,bent wrist move not completing
         # self.pose_tolerance = [0.002, 0.002, 0.002, 0.010, 0.010, 0.010]
@@ -212,18 +209,24 @@ class URcomm(object):
 
     # -- Move commands
 
-    def move_to(self, position, orientation, vel=None, acc=None, radius=0, wait=True):
+    def move_to(self, position, orientation, vel=None, acc=None, radius=0,
+                wait=True, override_safety=False):
         if vel is None:
             vel = self.joint_vel
         if acc is None:
             acc = self.joint_acc
         # position ins meters, orientation is axis-angle
-        if self._is_safe(position, self.moveto_limits):
+        moveto_lims = np.asarray(
+            [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
+
+        print('in move to we have A limits', self.A_moveto_limits)
+        if self._is_safe(position, moveto_lims) or override_safety:
             prog = "def moveTo():\n"
             # t = 0, r = radius
             if orientation is None:
                 self.logger.info(
                     "Attempting to move position but keep orientation")
+                print('keep current orient')
                 orientation = self.get_state('cartesian_info')[3:]
 
             prog += self._format_move("movel", np.concatenate((position, orientation)),
@@ -232,10 +235,11 @@ class URcomm(object):
             self.send_program(prog)
         else:
             print("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
-                  position, self.moveto_limits)
+                  position, moveto_lims)
             # self.logger.info("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
             # position, self.moveto_limits)
         if wait:
+            print('wiaitng for', position, orientation)
             self._wait_for_move(np.concatenate((position, orientation)),
                                 joints=False)
 
