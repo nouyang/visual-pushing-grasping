@@ -213,11 +213,11 @@ def main(args):
                 best_pix_y = nonlocal_variables['best_pix_ind'][1]
 
                 # NOTE: original
-                # primitive_position = [best_pix_x * heightmap_resolution + workspace_limits[0][0], best_pix_y * heightmap_resolution +
-                # workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x] + workspace_limits[2][0]]
-                # NOTE: mine, less safe 0:
                 primitive_position = [best_pix_x * heightmap_resolution + workspace_limits[0][0], best_pix_y * heightmap_resolution +
-                                      workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x]]
+                                      workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x] + workspace_limits[2][0]]
+                # NOTE: mine, less safe 0:
+                # primitive_position = [best_pix_x * heightmap_resolution + workspace_limits[0][0], best_pix_y * heightmap_resolution +
+                # workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x]]
 
                 # If pushing, adjust start position, and make sure z value is safe and not too low
                 # or nonlocal_variables['primitive_action'] == 'place':
@@ -322,8 +322,8 @@ def main(args):
         stuff_count[valid_depth_heightmap > 0.001] = 1
         print('DEBUG: depthmap avg', np.average(valid_depth_heightmap))
         # stuff_count[valid_depth_heightmap > 0.02] = 1
-        # empty_threshold = 300 # ORIG
-        empty_threshold = 20  # ORIG
+        # empty_threshold = 300  # ORIG
+        empty_threshold = 100
         if is_sim and is_testing:
             empty_threshold = 10
         print('DEBUG: stuff count', np.sum(stuff_count))

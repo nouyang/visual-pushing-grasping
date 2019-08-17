@@ -77,8 +77,12 @@ class Robot(object):
     def grasp_object(self, position, orientation):
         # throttle z position
         print('grasp prediction z:', position[2])
-        # NOTE: This is affected by workspace limits in get_heightmap!!!
-        position[2] = max(position[2], self.workspace_limits[2][0]) + 0.01
+        # TODO: ARE THeSE SUPPOSED TO BE BETWEEN 0 and 0.1, positive, neg or what?
+        print('grasp prediction z:', self.workspace_limits[2])
+
+        # position[2] = max(position[2], self.workspace_limits[2][0]) + 0.01
+        position[2] = max(position[2] + self.workspace_limits[2][0],
+                          self.workspace_limits[2][0]) + 0.03
 
         print('safetied grasp prediction z: ', position[2])
 
@@ -231,7 +235,9 @@ class Robot(object):
                 self.r.open_gripper()
 
                 print('Going home now')
-                self.r.move_to(home_position, home_orientation,
+                # self.r.move_to(home_position, home_orientation,
+                # TODO: DEBUG NONE (16 Aug)
+                self.r.move_to(home_position, None,
                                override_safety=True)
 
                 # NOTE: original code separates into approach and throw (tilted) parts

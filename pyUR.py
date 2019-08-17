@@ -216,6 +216,8 @@ class URcomm(object):
         if acc is None:
             acc = self.joint_acc
         # position ins meters, orientation is axis-angle
+
+        # TODO: Remove this hardcoding
         moveto_lims = np.asarray(
             [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
 
@@ -228,6 +230,8 @@ class URcomm(object):
                     "Attempting to move position but keep orientation")
                 print('keep current orient')
                 orientation = self.get_state('cartesian_info')[3:]
+            else:
+                print('new orientation', orientation)
 
             prog += self._format_move("movel", np.concatenate((position, orientation)),
                                       acc=acc, vel=vel, prefix="p")
@@ -239,9 +243,10 @@ class URcomm(object):
             # self.logger.info("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
             # position, self.moveto_limits)
         if wait:
-            print('wiaitng for', position, orientation)
+            print('waiting for', position, orientation)
             self._wait_for_move(np.concatenate((position, orientation)),
                                 joints=False)
+            print('done waiting')
 
     def move_joints(self, joint_configuration, vel=None, acc=None, wait=True):
         if vel is None:

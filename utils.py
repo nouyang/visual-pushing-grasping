@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+import copy
 
 
 def get_pointcloud(color_img, depth_img, camera_intrinsics):
@@ -40,16 +41,17 @@ def get_pointcloud(color_img, depth_img, camera_intrinsics):
     return cam_pts, rgb_pts
 
 
-def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, heightmap_limits, heightmap_resolution):
+def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limits, heightmap_resolution):
     # NOTE: Dirty hack, normal limits are higher since TCP must be (gripper
     # height) above actual table for gripper to not hit the table
     # otherwsie depth_hieghtmap is blank
+    heightmap_limits = workspace_limits.copy()
     heightmap_limits[2][0] = -0.420
     heightmap_limits[2][1] = -0.310
     print(' for get_heightmap, lowered workspace limits', heightmap_limits)
 
     if color_img.shape[0] > 250:
-        k = 1.  # 0.64
+        k = 0.64  # 0.64
         # Scale image, to change heightmap resolution, so resultant image is 224x224
         color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
         depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
