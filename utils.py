@@ -46,19 +46,21 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     # height) above actual table for gripper to not hit the table
     # otherwsie depth_hieghtmap is blank
     heightmap_limits = workspace_limits.copy()
-    heightmap_limits[2][0] = -0.420
+    heightmap_limits[2][0] = -0.430
     heightmap_limits[2][1] = -0.310
     print(' for get_heightmap, lowered workspace limits', heightmap_limits)
+    print(' for heighmap reso', heightmap_resolution)
 
-    if color_img.shape[0] > 250:
-        k = 0.64  # 0.64
-        # Scale image, to change heightmap resolution, so resultant image is 224x224
-        color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
-        depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
-        heightmap_resolution = 0.002*(1./k)
+    # if color_img.shape[0] > 250:
+    # k = 0.64  # 0.64
+    # # Scale image, to change heightmap resolution, so resultant image is 224x224
+    # color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
+    # depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
+    # heightmap_resolution = 0.0022*(1./k)
     # Compute heightmap size
-    heightmap_size = np.round(((heightmap_limits[1][1] - heightmap_limits[1][0])/heightmap_resolution,
-                               (heightmap_limits[0][1] - heightmap_limits[0][0])/heightmap_resolution)).astype(int)
+    # TODO: why need ceil?
+    heightmap_size = np.ceil(((heightmap_limits[1][1] - heightmap_limits[1][0])/heightmap_resolution,
+                              (heightmap_limits[0][1] - heightmap_limits[0][0])/heightmap_resolution)).astype(int)
 
     # Get 3D point cloud from RGB-D images
     surface_pts, color_pts = get_pointcloud(

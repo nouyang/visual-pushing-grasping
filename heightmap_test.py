@@ -39,11 +39,11 @@ color_img, depth_img = camera.get_data()
 depth_img = depth_img * cam_depth_scale
 # print('depthimage shape', depth_img.shape)
 # print('avg depth', np.average(depth_img))
-k = 1.
+k = 1
 # Scale image, to change heightmap resolution, so resultant image is 224x224
-color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
-depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
-heightmap_resolution = 0.002*(1./k)
+# color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
+# depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
+heightmap_resolution = 0.0011*(1./k)
 # depth_img = depth_img.astype(float) * depth_scale
 
 color_heightmap, depth_heightmap = utils.get_heightmap(
@@ -56,14 +56,14 @@ valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
 # logger.save_heightmaps(1, color_heightmap, valid_depth_heightmap, '0')
 
 color_image = cv2.cvtColor(color_img, cv2.COLOR_RGB2BGR)
-# print('color image saved shape', color_image.shape)
+print('color image saved shape', color_image.shape)
 cv2.imwrite(os.path.join(debug_dir, 'color.png'), color_image)
 # Save depth in 1e-4 meters
 depth_image = np.round(depth_img * 10000).astype(np.uint16)
 cv2.imwrite(os.path.join(debug_dir, 'depth.png'), depth_image)
 
 color_heightmap = cv2.cvtColor(color_heightmap, cv2.COLOR_RGB2BGR)
-# print('color heighmap saved shape', color_heightmap.shape)
+print('color heighmap saved shape', color_heightmap.shape)
 cv2.imwrite(os.path.join(debug_dir, 'color_heightmap.png'), color_heightmap)
 
 # Save depth in 1e-5 meters

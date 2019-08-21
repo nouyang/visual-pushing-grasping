@@ -58,7 +58,9 @@ def main(args):
             [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
         # [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.220]])  # calib pos
 
+    # TODO: HARDCODED
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
+    heightmap_resolution = 0.0011
     random_seed = args.random_seed
     force_cpu = args.force_cpu
 
@@ -213,11 +215,27 @@ def main(args):
                 best_pix_y = nonlocal_variables['best_pix_ind'][1]
 
                 # NOTE: original
-                primitive_position = [best_pix_x * heightmap_resolution + workspace_limits[0][0], best_pix_y * heightmap_resolution +
-                                      workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x] + workspace_limits[2][0]]
+                # TODO: why is it outof bound by one? indexing error
+                if best_pix_x == valid_depth_heightmap.shape[1]:
+                    best_pix_x -= 1
+                if best_pix_y == valid_depth_heightmap.shape[0]:
+                    best_pix_y -= 1
+
+                primitive_position = [best_pix_x * heightmap_resolution +
+                                      workspace_limits[0][0], best_pix_y *
+                                      heightmap_resolution +
+                                      workspace_limits[1][0],
+                                      valid_depth_heightmap[best_pix_y][best_pix_x]
+                                      + workspace_limits[2][0]]
+
+                # NOTE: should x and y be flipped as in original? Ah, the joys of image
+                # processing libraries
+
                 # NOTE: mine, less safe 0:
-                # primitive_position = [best_pix_x * heightmap_resolution + workspace_limits[0][0], best_pix_y * heightmap_resolution +
-                # workspace_limits[1][0], valid_depth_heightmap[best_pix_y][best_pix_x]]
+                # primitive_position = [best_pix_x * heightmap_resolution +
+                # workspace_limits[0][0], best_pix_y * heightmap_resolution +
+                # workspace_limits[1][0],
+                # valid_depth_heightmap[best_pix_y][best_pix_x]]
 
                 # If pushing, adjust start position, and make sure z value is safe and not too low
                 # or nonlocal_variables['primitive_action'] == 'place':
@@ -305,6 +323,7 @@ def main(args):
 
         # Get heightmap from RGB-D image (by re-projecting 3D point cloud)
         print("Thsi is the heightmap res", heightmap_resolution)
+        heightmap_resolution = 0.0011
         print("Thsi is the intrinsics", robot.cam_intrinsics)
         print("Thsi is the deph scale", robot.cam_depth_scale)
         color_heightmap, depth_heightmap = utils.get_heightmap(
@@ -323,7 +342,7 @@ def main(args):
         print('DEBUG: depthmap avg', np.average(valid_depth_heightmap))
         # stuff_count[valid_depth_heightmap > 0.02] = 1
         # empty_threshold = 300  # ORIG
-        empty_threshold = 100
+        empty_threshold = 300
         if is_sim and is_testing:
             empty_threshold = 10
         print('DEBUG: stuff count', np.sum(stuff_count))
@@ -344,6 +363,7 @@ def main(args):
                 # TODO: edit
                 print('Not enough stuff on the table (value: %d)! Flipping over bin of objects...' % (
                     np.sum(stuff_count)))
+                time.sleep(1)
                 robot.restart_real()
 
             trainer.clearance_log.append([trainer.iteration])

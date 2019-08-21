@@ -206,7 +206,7 @@ class Robot(object):
 
             # NOTE: mine
             # bin_position = [0.580, -0.040, 0.300]
-            bin_position = [-0.550, -0.276, -0.150]
+            bin_position = [-0.450, -0.276, -0.150]
             # home_position = [0.400, 0.000, 0.260]
             # NOTE: mine, and doesn't block the view
             # home_position = [0.400, -0.100, 0.420]
