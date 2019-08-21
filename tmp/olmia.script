@@ -11,32 +11,35 @@ def olmia():
     # Turn off supply voltage
     set_tool_voltage(0)
     # Wait for discharge
-    sleep(2.0)
+    sleep(1.0)
     # popup("hi4")
     set_digital_out(8, False)
     set_digital_out(9, False)
     # Turn on supply voltage
     set_tool_voltage(24)
-    sleep(0.1)
     # Wait for RG2 ready
     timeout = 0
+    while get_digital_in(9) == False:
+        timeout = timeout+1
+        # sleep(0.008)
+        sleep(0.005)
+        if timeout > 800:
+            # wait at most 5 secs
+            textmsg("breaking")
+            break
+        end
+    end
 
-    set_digital_out(8, True)
-    set_digital_out(9, True)
-    sleep(1)
-
+    count = 0
+    textmsg("beginning loop")
     set_digital_out(9, False)
-    set_digital_out(8, False)
-    sleep(0.1)
-    set_digital_out(8, True)
-    sleep(0.1)
     while True:
-        set_digital_out(8, False)
-        sleep(1)
-        set_digital_out(8, True)
-        sleep(1)
-        set_digital_out(8, False)
-        sleep(1)
+    textmsg(count)
+    set_digital_out(8, True)
+    sleep(1)
+    set_digital_out(8, False)
+    sleep(1)
+    count = count + 1
     end
 
     end
