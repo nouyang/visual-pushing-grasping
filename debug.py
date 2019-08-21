@@ -31,7 +31,7 @@ workspace_limits = np.asarray(
 
 # Initialize robot and move to home pose
 # NOTE: IMPORTANT!!! ROBOT WILL GO HERE FIRST AT RAPID SPEED
-home = np.asarray([0., -42., 85., -058.9, -90., 0.])*np.pi/180.0
+home = np.asarray([0., -42., 85., -058.9, -90., 180.])*np.pi/180.0
 # home = np.asarray([0., -45., 90., -050.9, -90., 0.]) * np.pi / 180.0
 print('home', home)
 
@@ -64,7 +64,8 @@ while True:
         prompt1 = raw_input("Place object in grasp, then 'y' to close grasp: ")
         if str(prompt1) == 'y':
             # time.sleep(0.01)
-            robot.r.close_gripper()
+            # robot.r.close_gripper()
+            pass
             # time.sleep(0.01)
         prompt2 = raw_input("Stand clear, then 'yes' to throw, o to open: ")
         if str(prompt2) == 'yes':
@@ -75,7 +76,8 @@ while True:
             robot.r.throw_andy(is_sim=False)
             print('!----Throw completed')
         if str(prompt2) == 'o':
-            robot.r.open_gripper()
+            pass
+            # robot.r.open_gripper()
 
         # # robot.push(push_position, 0, workspace_limits)
         # # robot.restart_real()

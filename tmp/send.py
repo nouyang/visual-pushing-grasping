@@ -5,8 +5,21 @@ PORT = 30002              # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 print("Starting Program")
-f = open("./rg2_new.script", "r")
-s.send(f.read() + "/n")
-data = s.recv(1024)
+# f = open("./rg2_new.script", "r")
+# f = open("./olmia.script", "r")
+# s.send(f.read() + "/n")
+# data = s.recv(1024)
+# s.close()
+
+
+f = open("./olmia.script", "rb")  # Robotiq Gripper
+# f = open ("setzero.script", "rb")  #Robotiq FT sensor
+
+l = f.read(1024)
+while (l):
+    s.send(l)
+    l = f.read(1024)
 s.close()
+
+
 print ("Closed connection and received data")
