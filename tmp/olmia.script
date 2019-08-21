@@ -42,7 +42,5 @@ def olmia():
     count = count + 1
     end
 
-    end
-
 
 end

@@ -529,7 +529,6 @@ class URcomm(object):
                 return
 
     '''
-
     def _wait_for_move(self, target, threshold=None, timeout=5, joints=False):
         """
         wait for a move to complete. Unfortunately there is no good way to know when a move has finished
