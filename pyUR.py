@@ -90,17 +90,20 @@ class URcomm(object):
 
     # We also talk to Robotiq 2F-85 gripper through the UR5 "API"
 
-    def open_gripper(self, async=False):
-        prog = "def openGrip():\n"
-        prog += self.socket_close_str
-        prog += self.socket_open_str
-        prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
-                                                              self.socket_name)
-        prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
-                                                              self.socket_name)
-        prog += "end\n"
-        self.logger.debug("opening gripper")
-        self.send_program(prog)
+    def open_gripper(self, async=False, robotiq=False):
+        if robotiq:
+            prog = "def openGrip():\n"
+            prog += self.socket_close_str
+            prog += self.socket_open_str
+            prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
+                                                                  self.socket_name)
+            prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
+                                                                  self.socket_name)
+            prog += "end\n"
+            self.logger.debug("opening gripper")
+            self.send_program(prog)
+        else:  # RG2
+            self.send_program("set_digital_out(8,False)\n")
 
     def close_gripper(self, async=False):
         # print("!-- close gripper")
@@ -365,6 +368,9 @@ class URcomm(object):
         # pose_list = [start_pose, middle_pose, end_pose, start_pose]
         self.combo_move(throw_pose_list, wait=True, is_sim=is_sim)
 
+    def throw_overhand(self, wait=True, RG2=True):
+        pass
+
     def throw_andy(self, wait=True, is_sim=False):
         default_jacc = 8.  # 8
         default_jvel = 15.0  # 10
@@ -390,23 +396,20 @@ class URcomm(object):
                                                                    self.socket_name)
         tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("FOR", 0,
                                                                    self.socket_name)
-        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % (pretoss_jconf[0], pretoss_jconf[1], pretoss_jconf[2],
-                                                                              pretoss_jconf[3], pretoss_jconf[4], pretoss_jconf[5], default_jacc, default_jvel, pretoss_blend_radius)
-
-        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % (posttoss_jconf[0], posttoss_jconf[1],
-                                                                              posttoss_jconf[2], posttoss_jconf[3], posttoss_jconf[4], posttoss_jconf[5], toss_jacc, toss_jvel, toss_blend_radius)
+        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % \
+            (pretoss_jconf[0], pretoss_jconf[1], pretoss_jconf[2], pretoss_jconf[3],
+             pretoss_jconf[4], pretoss_jconf[5], default_jacc, default_jvel, pretoss_blend_radius)
+        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=%f)\n' % \
+            (posttoss_jconf[0], posttoss_jconf[1], posttoss_jconf[2], posttoss_jconf[3],
+             posttoss_jconf[4], posttoss_jconf[5], toss_jacc, toss_jvel, toss_blend_radius)
         # tcp_msg += '    set_digital_out(8,False)\n'  # for RG2 gripper
 
         tcp_msg += "    socket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
                                                                    self.socket_name)
         # tcp_msg += "    sync()\n"
-        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=0.0)\n' % (pretoss_jconf[0], pretoss_jconf[1],
-                                                                               pretoss_jconf[2],
-                                                                               pretoss_jconf[3],
-                                                                               pretoss_jconf[4],
-                                                                               pretoss_jconf[5],
-                                                                               default_jacc,
-                                                                               default_jvel)
+        tcp_msg += '    movej([%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0.0,r=0.0)\n' % \
+            (pretoss_jconf[0], pretoss_jconf[1], pretoss_jconf[2], pretoss_jconf[3],
+             pretoss_jconf[4], pretoss_jconf[5], default_jacc, default_jvel)
         tcp_msg += '    socket_close("gripper_socket")\n'
         tcp_msg += 'end\n'
         self.send_program(tcp_msg, is_sim=is_sim)
