@@ -8,7 +8,7 @@ import utils
 import serial
 import binascii
 
-from pyUR import URcomm
+from pyUR import PyUR
 
 from simulation import vrep
 from real.camera import Camera
@@ -42,8 +42,8 @@ class Robot(object):
             # NOTE: port is assumed to be 30002
             self.workspace_limits = workspace_limits
 
-            self.r = URcomm(tcp_host_ip, self.joint_vel,
-                            self.joint_acc, home_joint_config=home_joint_config,
+            self.r = PyUR(tcp_host_ip, self.joint_vel,
+                            # self.joint_acc, home_joint_config=home_joint_config,
                             workspace_limits=workspace_limits)
 
             # Move robot to home pose
@@ -126,7 +126,6 @@ class Robot(object):
             # Compute tilted tool orientation during dropping into bin
             tilt_rotm = utils.euler2rotm(np.asarray([-np.pi/4, 0, 0]))
             tilted_tool_orientation_rotm = np.dot(
-
                 tilt_rotm, tool_orientation_rotm)
             tilted_tool_orientation_axis_angle = utils.rotm2angle(
                 tilted_tool_orientation_rotm)
@@ -135,12 +134,13 @@ class Robot(object):
 
             # NOTE: hardcode: tool_orientation = [1.19, -1.26, -1.22]
             # tool_orientation = [2.15, -2.25, -0.10]
-            tilted_tool_orientation = tool_orientation
+            # tilted_tool_orientation = tool_orientation
 
             # Attempt grasp
-            self.grasp_object(position, tool_orientation)
+
             position = np.asarray(position).copy()
             position[2] = max(position[2] - 0.05, workspace_limits[2][0])
+            self.grasp_object(position, tool_orientation)
 
             # tcp_command = "def process():\n"
             # # ... is this a way to close the gripper

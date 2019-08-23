@@ -9,7 +9,7 @@ __copyright__ = "Copyright 2011-2015, Sintef Raufoss Manufacturing"
 __license__ = "LGPLv3"
 
 
-class URcomm(object):
+class PyUR(object):
     def __init__(self, host, joint_vel, joint_acc, home_joint_config=None, workspace_limits=None):
 
         self.joint_vel = joint_vel
@@ -75,23 +75,55 @@ class URcomm(object):
     # -- Gripper commands
 
     def activate_gripper(self):
-        prog = "def actGrip():\n"
-        # Activate gripper
-        prog += self.socket_close_str
-        prog += self.socket_open_str
-        # TODO: does this cause the gripper to open and close? to acitvate
-        prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
-                                                            self.socket_name)
-        prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
-                                                            self.socket_name)
-        prog += "end\n"
+        if self.isRobotiq:
+            prog = "def actGrip():\n"
+            # Activate gripper
+            prog += self.socket_close_str
+            prog += self.socket_open_str
+            # TODO: does this cause the gripper to open and close? to acitvate
+            prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("ACT", 1,
+                                                                self.socket_name)
+            prog += "socket_set_var(\"{}\",{},\"{}\")\n".format("GTO", 1,
+                                                                self.socket_name)
+            prog += "end\n"
+        else:
+            prog = '''
+            def start_rg2():
+                set_tool_voltage(0)
+                sleep(1.0)
+                set_digital_out(8, False)
+                set_digital_out(9, False)
+                set_tool_voltage(24)
+                while get_digital_in(9) == False:
+                    timeout = timeout+1
+                    # sleep(0.008)
+                    sleep(0.005)
+                    if timeout > 800:
+                        # wait at most 5 secs
+                        textmsg("breaking")
+                        break
+                    end
+                end
+
+                count = 0
+                textmsg("beginning loop")
+                set_digital_out(9, False)
+                while True:
+                textmsg(count)
+                set_digital_out(8, True)
+                sleep(1)
+                set_digital_out(8, False)
+                sleep(1)
+                count = count + 1
+                end
+            end '''
         self.logger.debug("Activating gripper")
         self.send_program(prog)
 
     # We also talk to Robotiq 2F-85 gripper through the UR5 "API"
 
     def open_gripper(self, async=False, robotiq=False):
-        if robotiq:
+        if self.isRobotiq:
             prog = "def openGrip():\n"
             prog += self.socket_close_str
             prog += self.socket_open_str
@@ -100,46 +132,48 @@ class URcomm(object):
             prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
                                                                   self.socket_name)
             prog += "end\n"
-            self.logger.debug("opening gripper")
             self.send_program(prog)
         else:  # RG2
             self.send_program("set_digital_out(8,False)\n")
+        self.logger.debug("opening gripper")
 
     def close_gripper(self, async=False):
-        # print("!-- close gripper")
-        prog = "def closeGrip():\n"
-        prog += self.socket_close_str
-        prog += self.socket_open_str
-        prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("FOR", 20,
-                                                              self.socket_name)
-        prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
-                                                              self.socket_name)
-        prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 255,
-                                                              self.socket_name)
-        prog += "end\n"
-        self.send_program(prog)
+        if self.isRobotiq:
+            prog = "def closeGrip():\n"
+            prog += self.socket_close_str
+            prog += self.socket_open_str
+            prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("FOR", 20,
+                                                                  self.socket_name)
+            prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
+                                                                  self.socket_name)
+            prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 255,
+                                                                  self.socket_name)
+            prog += "end\n"
+        else:
+            self.send_program("set_digital_out(8,True)\n")
         self.logger.debug("Closing gripper")
 
-        # gripper_fully_closed = self.check_grasp()
-        gripper_fully_closed = True
+        gripper_fully_closed = self.check_grasp()
+        # gripper_fully_closed = True
         return gripper_fully_closed
 
-    def check_grasp(self):
-        prog = "def setAnalogOutToGripPos():\n"
-        prog += self.socket_close_str
-        prog += self.socket_open_str
-        prog += '\trq_pos = socket_get_var("POS","gripper_socket")\n'
-        prog += "\tset_standard_analog_out(0, rq_pos / 255)\n"
-        prog += "end\n"
-        self.send_program(prog)
 
-        # TODO: do I need a slight delay here?
+   def check_grasp(self):
+        if self.isRobotiq:
+            prog = "def setAnalogOutToGripPos():\n"
+            prog += self.socket_close_str
+            prog += self.socket_open_str
+            prog += '\trq_pos = socket_get_var("POS","gripper_socket")\n'
+            prog += "\tset_standard_analog_out(0, rq_pos / 255)\n"
+            prog += "end\n"
+            self.send_program(prog)
+            # tool_pos = self.get_state('tool_data')
+            # return tool_pos > 9  # TODO
+        else:
+            return self.get_state('cartesian_info')
+            tool_analog_input2 > 0.26
 
-        tool_pos = self.get_state('tool_data')
-
-        return tool_pos > 9  # TODO
-
-    # -- Data commands
+            # -- Data commands
 
     def get_state(self, subpackage):
 
@@ -164,7 +198,7 @@ class URcomm(object):
 
         def get_tool_data():
             # TODO: is this a value b/tw 0 and 10?
-            return self.secmon.get_analog_out(0)
+            return self.secmon.get_all_data()["ToolData"]["analogInput2"]
 
         parse_functions = {'joint_data': get_joint_data, 'cartesian_info':
                            get_cartesian_info, 'tool_data': get_tool_data}
