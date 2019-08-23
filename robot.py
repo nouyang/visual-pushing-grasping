@@ -105,20 +105,21 @@ class Robot(object):
         if self.is_sim:
             pass
 
-            # Compute tool orientation from heightmap rotation angle
-            # Basically, how should I rotate the gripper...
-            # I GUESS THIS IS KIND OF IMPORTANT
-            # It would be nice to specify in terms of ... pis, and not rx ry rz
         else:
-            # grasp_orientation = [1.0, 0.0]
-            '''
+            grasp_orientation = [1.0, 0.0]
+            # Compute tool orientation from heightmap rotation angle
             if heightmap_rotation_angle > np.pi:
                 heightmap_rotation_angle = heightmap_rotation_angle - 2*np.pi
             tool_rotation_angle = heightmap_rotation_angle/2
-            tool_orientation = np.asarray([grasp_orientation[0]*np.cos(tool_rotation_angle) - grasp_orientation[1]*np.sin(
-                tool_rotation_angle), grasp_orientation[0]*np.sin(tool_rotation_angle) + grasp_orientation[1]*np.cos(tool_rotation_angle), 0.0])*np.pi
+            # NOTE: this is a weird way of saying [np.cos, np.sin]
+            tool_orientation = np.asarray([
+                grasp_orientation[0]*np.cos(tool_rotation_angle) -
+                grasp_orientation[1]*np.sin(tool_rotation_angle),
+                grasp_orientation[0]*np.sin(tool_rotation_angle) +
+                grasp_orientation[1]*np.cos(tool_rotation_angle),
+                0.0]) * np.pi
             tool_orientation_angle = np.linalg.norm(tool_orientation)
-            tool_orientation_axis = tool_orientation/tool_orientation_angle
+            tool_orientation_axis = tool_orientation / tool_orientation_angle
             tool_orientation_rotm = utils.angle2rotm(
                 tool_orientation_angle, tool_orientation_axis, point=None)[:3, :3]
 
@@ -130,31 +131,30 @@ class Robot(object):
                 tilted_tool_orientation_rotm)
             tilted_tool_orientation = tilted_tool_orientation_axis_angle[0]*np.asarray(
                 tilted_tool_orientation_axis_angle[1:4])
-            '''
-            # position
-            # TODO: GRASP  ORIENTATION
-            # tool_orientation = [1.19, -1.26, -1.22]
-            tool_orientation = [2.15, -2.25, -0.10]
+
+            # NOTE: hardcode: tool_orientation = [1.19, -1.26, -1.22]
+            # tool_orientation = [2.15, -2.25, -0.10]
             tilted_tool_orientation = tool_orientation
+
             # Attempt grasp
-            print('!--- Attempting to open gripper, then go down & close --!')
             self.grasp_object(position, tool_orientation)
-            '''
             position = np.asarray(position).copy()
             position[2] = max(position[2] - 0.05, workspace_limits[2][0])
 
-            tcp_command = "def process():\n"
-            # ... is this a way to close the gripper
-            # sure is
-            tcp_command += " set_digital_out(8,False)\n"
-            tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.09)\n" \
-                % (position[0], position[1], position[2] + 0.1, tool_orientation[0],
-                   tool_orientation[1], 0.0, self.joint_acc * 0.5, self.joint_vel * 0.5)
-            tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.00)\n" \
-                % (position[0], position[1], position[2], tool_orientation[0],
-                   tool_orientation[1], 0.0, self.joint_acc * 0.1, self.joint_vel * 0.1)
-            tcp_command += " set_digital_out(8,True)\n"
-            tcp_command += "end\n"
+            # tcp_command = "def process():\n"
+            # # ... is this a way to close the gripper
+            # # sure is
+
+            # tcp_command += " set_digital_out(8,False)\n"
+            # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.09)\n" \
+                # % (position[0], position[1], position[2] + 0.1, tool_orientation[0],
+                   # tool_orientation[1], 0.0, self.joint_acc * 0.5, self.joint_vel * 0.5)
+            # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.00)\n" \
+                # % (position[0], position[1], position[2], tool_orientation[0],
+                   # tool_orientation[1], 0.0, self.joint_acc * 0.1, self.joint_vel * 0.1)
+            # tcp_command += " set_digital_out(8,True)\n"
+            # tcp_command += "end\n"
+
             '''
             # Block until robot reaches target tool position and gripper fingers have stopped moving
             '''
@@ -355,6 +355,8 @@ class Robot(object):
 
 
 '''
+
+
 def restart_real(self):
     # Compute tool orientation from heightmap rotation angle
     grasp_orientation = [1.0, 0.0]
