@@ -126,6 +126,7 @@ class Robot(object):
             # Compute tilted tool orientation during dropping into bin
             tilt_rotm = utils.euler2rotm(np.asarray([-np.pi/4, 0, 0]))
             tilted_tool_orientation_rotm = np.dot(
+
                 tilt_rotm, tool_orientation_rotm)
             tilted_tool_orientation_axis_angle = utils.rotm2angle(
                 tilted_tool_orientation_rotm)
@@ -203,18 +204,6 @@ class Robot(object):
             # orig
             # home_position = [0.49, 0.11, 0.03]
             # bin_position = [0.5, -0.45, 0.1]
-
-            # NOTE: mine
-            # bin_position = [0.580, -0.040, 0.300]
-            bin_position = [-0.450, -0.276, -0.150]
-            # home_position = [0.400, 0.000, 0.260]
-            # NOTE: mine, and doesn't block the view
-            # home_position = [0.400, -0.100, 0.420]
-            # D435 home_position = [0.254, 0.218, 0.434]
-            # D415
-            # home_position = [-0.464, -0.097, -0.151]
-            home_position = [-0.414, -0.266, -0.192]
-            home_orientation = [2.28, -2.26, -0.04]
 
             # If gripper is open, drop object in bin and check if grasp is successful
             # grasp_success = False
