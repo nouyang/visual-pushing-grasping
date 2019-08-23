@@ -75,22 +75,16 @@ class Robot(object):
         return color_img, depth_img
 
     def grasp_object(self, position, orientation):
-        # throttle z position
+        # TODO: right now not batching into single urscript function; could do
+        # in future
         print('grasp prediction z:', position[2])
-        # TODO: ARE THeSE SUPPOSED TO BE BETWEEN 0 and 0.1, positive, neg or what?
-        print('grasp prediction z:', self.workspace_limits[2])
-
-        # position[2] = max(position[2], self.workspace_limits[2][0]) + 0.01
-        position[2] = max(position[2] + self.workspace_limits[2][0],
-                          self.workspace_limits[2][0]) + 0.03
-
-        print('safetied grasp prediction z: ', position[2])
 
         self.r.open_gripper()
-        # move fast to right above the object
-        # height of gripper?
-        self.r.move_to([position[0], position[1], position[2] + 0.155],
-                       orientation)
+        # NOTE: Hardcoded values as per vpg code
+        orientation[2] = 0
+        self.r.move_to([position[0], position[1], position[2] + 0.1],
+                       orientation, vel=self.joint_vel*0.5,
+                       acc=self.joint_acc*0.5)
         # then slowly move down
         print('position', position, 'orientation', orientation)
         self.r.move_to(position, orientation)
@@ -136,25 +130,12 @@ class Robot(object):
             # tool_orientation = [2.15, -2.25, -0.10]
             # tilted_tool_orientation = tool_orientation
 
-            # Attempt grasp
-
+            # Truncate at workspace min z limit
             position = np.asarray(position).copy()
             position[2] = max(position[2] - 0.05, workspace_limits[2][0])
+
+            # Attempt grasp
             self.grasp_object(position, tool_orientation)
-
-            # tcp_command = "def process():\n"
-            # # ... is this a way to close the gripper
-            # # sure is
-
-            # tcp_command += " set_digital_out(8,False)\n"
-            # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.09)\n" \
-                # % (position[0], position[1], position[2] + 0.1, tool_orientation[0],
-                   # tool_orientation[1], 0.0, self.joint_acc * 0.5, self.joint_vel * 0.5)
-            # tcp_command += " movej(p[%f,%f,%f,%f,%f,%f],a=%f,v=%f,t=0,r=0.00)\n" \
-                # % (position[0], position[1], position[2], tool_orientation[0],
-                   # tool_orientation[1], 0.0, self.joint_acc * 0.1, self.joint_vel * 0.1)
-            # tcp_command += " set_digital_out(8,True)\n"
-            # tcp_command += "end\n"
 
             '''
             # Block until robot reaches target tool position and gripper fingers have stopped moving
@@ -276,7 +257,6 @@ class Robot(object):
                         print('\n !------ Gripper not closed; breaking --')
                         break
                 '''
-
                 # TODO!
                 # TODO: this appears to continuously try to close to keep object
                 # in grasp (in case of slip when moving); mine just closes !
@@ -285,9 +265,8 @@ class Robot(object):
                     if abs(measurements[0] - measurements[1]) < 0.1:
                         print('\n !------ Grasp success, did not fall out!---')
                         grasp_success = True
-
-            else:
-                print('\n !------ Gripper closed ---')
+                else:
+                    print('\n !------ Gripper closed ---')
                 '''
                 self.tcp_socket = socket.socket(
                     socket.AF_INET, socket.SOCK_STREAM)

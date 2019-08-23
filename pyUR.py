@@ -1,6 +1,6 @@
 """
 """
-import ursecmon
+import localursecmon
 import logging
 import numpy as np
 
@@ -149,7 +149,7 @@ class PyUR(object):
             prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 255,
                                                                   self.socket_name)
             prog += "end\n"
-        else:
+        else:  # rg2
             self.send_program("set_digital_out(8,True)\n")
         self.logger.debug("Closing gripper")
 
@@ -170,13 +170,12 @@ class PyUR(object):
             # tool_pos = self.get_state('tool_data')
             # return tool_pos > 9  # TODO
         else:
-            return self.get_state('cartesian_info')
-            tool_analog_input2 > 0.26
-
+            gripper_width = self.secmon.get_all_data()["ToolData"]["analogInput2"] 
+            return gripper_width > 0.26
             # -- Data commands
 
-    def get_state(self, subpackage):
 
+    def get_state(self, subpackage):
         def get_joint_data(_log=True):
             jts = self.secmon.get_joint_data()
             joint_positions = [jts["q_actual0"], jts["q_actual1"],
@@ -196,13 +195,21 @@ class PyUR(object):
                 self.logger.debug("Received pose from robot: %s", pose)
             return pose
 
-        def get_tool_data():
+        def get_gripper_width(_log=True):
             # TODO: is this a value b/tw 0 and 10?
-            return self.secmon.get_all_data()["ToolData"]["analogInput2"]
+            if robotiq:
+                pass
+            else:
+                # return self.secmon.get_tool_analog_in(2)
+                return self.secmon.get_all_data()["ToolData"]["analogInput2"]
+            if _log:
+                self.logger.debug("Received gripper width data from robot: %s",
+                                  gripper_width)
 
-        parse_functions = {'joint_data': get_joint_data, 'cartesian_info':
-                           get_cartesian_info, 'tool_data': get_tool_data}
-        return parse_functions[subpackage]()  # cute trick
+        parse_functions = {'joint_data': get_joint_data,
+                           'cartesian_info': get_cartesian_info, 'gripper_width':
+                           get_gripper_width}
+        return parse_functions[subpackage]()
 
     def send_program(self, prog, is_sim=False):
         # mostly adding a printout for ease of debugging
