@@ -75,7 +75,7 @@ class PyUR(object):
     # -- Gripper commands
 
     def activate_gripper(self):
-        if self.isRobotiq:
+        if self.is_robotiq:
             prog = "def actGrip():\n"
             # Activate gripper
             prog += self.socket_close_str
@@ -87,7 +87,8 @@ class PyUR(object):
                                                                 self.socket_name)
             prog += "end\n"
         else:
-            prog = '''
+            prog =  \
+            '''
             def start_rg2():
                 set_tool_voltage(0)
                 sleep(1.0)
@@ -116,14 +117,15 @@ class PyUR(object):
                 sleep(1)
                 count = count + 1
                 end
-            end '''
+            en
+            '''
         self.logger.debug("Activating gripper")
         self.send_program(prog)
 
     # We also talk to Robotiq 2F-85 gripper through the UR5 "API"
 
     def open_gripper(self, async=False, robotiq=False):
-        if self.isRobotiq:
+        if self.is_robotiq:
             prog = "def openGrip():\n"
             prog += self.socket_close_str
             prog += self.socket_open_str
@@ -138,7 +140,7 @@ class PyUR(object):
         self.logger.debug("opening gripper")
 
     def close_gripper(self, async=False):
-        if self.isRobotiq:
+        if self.is_robotiq:
             prog = "def closeGrip():\n"
             prog += self.socket_close_str
             prog += self.socket_open_str
@@ -159,7 +161,7 @@ class PyUR(object):
 
 
    def check_grasp(self):
-        if self.isRobotiq:
+        if self.is_robotiq:
             prog = "def setAnalogOutToGripPos():\n"
             prog += self.socket_close_str
             prog += self.socket_open_str
@@ -167,11 +169,13 @@ class PyUR(object):
             prog += "\tset_standard_analog_out(0, rq_pos / 255)\n"
             prog += "end\n"
             self.send_program(prog)
+            # TODO: read analog out 0, determine values to compare to
             # tool_pos = self.get_state('tool_data')
             # return tool_pos > 9  # TODO
         else:
-            return self.get_state('cartesian_info')
-            tool_analog_input2 > 0.26
+            # Gripper did not close all the way
+            return self.get_state('tool_data' > 0.26)
+            # tool_analog_input2 > 0.26
 
             # -- Data commands
 
@@ -184,7 +188,7 @@ class PyUR(object):
                                jts["q_actual4"], jts["q_actual5"]]
             if _log:
                 self.logger.debug("Received joint data from robot: %s",
-                                  joint_positions)
+                                  str(joint_positions))
             return joint_positions
 
         def get_cartesian_info(_log=True):
@@ -193,12 +197,19 @@ class PyUR(object):
                 pose = [pose["X"], pose["Y"], pose["Z"],
                         pose["Rx"], pose["Ry"], pose["Rz"]]
             if _log:
-                self.logger.debug("Received pose from robot: %s", pose)
+                self.logger.debug("Received pose from robot: %s", str(pose))
             return pose
 
         def get_tool_data():
             # TODO: is this a value b/tw 0 and 10?
-            return self.secmon.get_all_data()["ToolData"]["analogInput2"]
+            if self.is_robotiq:
+                width = self.secmon.get_all_data()["ToolData"]["analogInput2"]
+            else:
+                width = self.secom.get_tool_analog_in(2)
+            if _log:
+                self.logger.debug("Received gripper (is robotiq? %s) width from
+                robot: %s" % (str(self.is_robotiq, str(width))
+            return width
 
         parse_functions = {'joint_data': get_joint_data, 'cartesian_info':
                            get_cartesian_info, 'tool_data': get_tool_data}
@@ -258,7 +269,7 @@ class PyUR(object):
         moveto_lims = np.asarray(
             [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
 
-        print('in move to we have A limits', self.A_moveto_limits)
+        print('in move to we have a limits', self.A_moveto_limits)
         if self._is_safe(position, moveto_lims) or override_safety:
             prog = "def moveTo():\n"
             # t = 0, r = radius
@@ -271,7 +282,7 @@ class PyUR(object):
                 print('new orientation', orientation)
 
             prog += self._format_move("movel", np.concatenate((position, orientation)),
-                                      acc=acc, vel=vel, prefix="p")
+                                   acc=acc, vel=vel, prefix="p")
             prog += "end\n"
             self.send_program(prog)
         else:
@@ -304,6 +315,9 @@ class PyUR(object):
         self.logger.debug("Going home.")
         self.move_joints(self.home_joint_config)
 
+    # def get_gripper_width(self):
+        # return self.get_state('tool_data')
+
     def combo_move(self, moves_list, wait=True, is_sim=False):
         """
         Example use:
@@ -317,23 +331,35 @@ class PyUR(object):
         for idx, a_move in enumerate(moves_list):
 
             if a_move["type"] == 'open':
-                prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
-                                                                      self.socket_name)
-                prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
-                                                                      self.socket_name)
+                if self.is_robotiq:
+                    prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("SPE", 255,
+                                                                          self.socket_name)
+                    prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
+                                                                          self.socket_name)
+                else:
+                    prog += "\tset_digital_out(8, True)"
+
+            elif a_move["type"] == 'close':
+                if self.is_robotiq: 
+                    prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS",
+                                                                          255,
+                                                                          self.socket_name)
+                else:
+                    prog += "\tset_digital_out(8, False)"
+
             else:
-                acc, vel, radius = a_move["acc"], a_move["vel"], a_move["radius"]
-                if radius is None:
-                    radius = 0.01
-                if acc is None:
+                if radius not in a_move:
+                    a_move['radius'] = 0.01
+                if acc not in a_move:
                     # acc = self.joint_acc
                     acc = self.joint_acc
-                if vel is None:
+                if vel not in a_move:
                     vel = self.joint_vel
                 if idx == (len(moves_list) - 1):
                     radius = 0.001
-                    acc = self.joint_acc
-                    vel = self.joint_vel
+                    # acc = self.joint_acc
+                    # vel = self.joint_vel
+                acc, vel, radius = a_move["acc"], a_move["vel"], a_move["radius"]
 
                 # WARNING: this does not have safety checks!
                 if a_move["type"] == 'j':
@@ -343,6 +369,7 @@ class PyUR(object):
                     prog += self._format_move(
                         'movel', a_move['pose'], acc, vel, radius, prefix="p") + "\n"
         prog += "end\n"
+
         self.send_program(prog, is_sim=is_sim)
 
         if wait:
