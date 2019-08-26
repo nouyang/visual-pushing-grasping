@@ -297,8 +297,8 @@ def main(args):
                           (nonlocal_variables['grasp_success']))
 
                 nonlocal_variables['executing_action'] = False
-
             time.sleep(0.01)
+
     action_thread = threading.Thread(target=process_actions)
     action_thread.daemon = True
     action_thread.start()

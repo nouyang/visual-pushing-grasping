@@ -68,7 +68,7 @@ class Trainer(object):
         # Convert model from CPU to GPU
         if self.use_cuda:
             self.model = self.model.cuda()
-        
+
         # Set model to training mode
         self.model.train()
 
@@ -187,7 +187,10 @@ class Trainer(object):
         return push_predictions, grasp_predictions, state_feat
 
 
-    def get_label_value(self, primitive_action, push_success, grasp_success, change_detected, prev_push_predictions, prev_grasp_predictions, next_color_heightmap, next_depth_heightmap):
+    def get_label_value(self, primitive_action, push_success, grasp_success,
+                        change_detected, prev_push_predictions,
+                        prev_grasp_predictions, next_color_heightmap,
+                        next_depth_heightmap):
 
         if self.method == 'reactive':
 

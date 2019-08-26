@@ -75,6 +75,7 @@ class Robot(object):
 
         return color_img, depth_img
 
+    ''' NOT NEEDED ANYMORE
     def grasp_object(self, position, orientation):
         # throttle z position
         print('grasp prediction z:', position[2])
@@ -98,6 +99,7 @@ class Robot(object):
         # vel=0.5*self.joint_vel, acc=0.1*self.joint_acc)
         # and grasp it
         self.r.close_gripper()
+    '''
 
     def grasp(self, position, heightmap_rotation_angle, workspace_limits):
         print('Executing: grasp at (%f, %f, %f)' %
@@ -135,7 +137,8 @@ class Robot(object):
 
             position = np.asarray(position).copy()
             position[2] = max(position[2] - 0.05, workspace_limits[2][0])
-            self.grasp_object(position, tool_orientation)
+            # NOTE: not needed anymore
+            # self.grasp_object(position, tool_orientation)
 
             # Attempt grasp
             tool_orientation[2] = 0
