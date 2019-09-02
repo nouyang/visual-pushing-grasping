@@ -412,7 +412,6 @@ def main(args):
                 elif prev_primitive_action == 'grasp':
                     no_change_count[1] += 1
 
-            '''
             # Compute training labels
             label_value, prev_reward_value = trainer.get_label_value(
                 prev_primitive_action, prev_push_success, prev_grasp_success, change_detected, prev_push_predictions, prev_grasp_predictions, color_heightmap, valid_depth_heightmap)
@@ -519,7 +518,6 @@ def main(args):
                 else:
                     print(
                         'Not enough prior training samples. Skipping experience replay.')
-            '''
 
             # Save model snapshot
             if not is_testing:

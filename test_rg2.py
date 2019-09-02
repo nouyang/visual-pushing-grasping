@@ -36,6 +36,7 @@ def overHand():
         movej([0., -2.452, -0.414, -3.796, -1.571,  3.142], a=8.00, v=3.00, t=0.0, r=0.00)
 end
 '''
+
 tcp_command += "end\n"
 tcp_socket.send(str.encode(tcp_command))
 tcp_socket.close()
