@@ -44,12 +44,12 @@ class Robot(object):
             self.workspace_limits = workspace_limits
 
             self.r = PyUR(tcp_host_ip, self.joint_vel,
-                          # self.joint_acc, home_joint_config=home_joint_config,
+                          self.joint_acc, home_joint_config=home_joint_config,
                           workspace_limits=workspace_limits)
 
             # Move robot to home pose
             self.r.go_home()
-            self.r.activate_gripper()
+            # self.r.activate_gripper()
             # self.r.close_gripper()
             # self.r.open_gripper()
 
@@ -145,7 +145,7 @@ class Robot(object):
                     'acc': self.joint_acc * 0.1, 'vel': self.joint_vel * 0.1,
                     'rad': 0.00}
             # Block until robot reaches target tool position and gripper fingers have stopped moving
-            self.r.combo_move([{'type': 'open', above, down, 'type': 'close'}],
+            self.r.combo_move([{'type': 'open'}, above, down, {'type': 'close'}],
                               wait=True)
 
             # TODO: change these values! -----

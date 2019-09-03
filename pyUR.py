@@ -1,6 +1,6 @@
 """
 """
-import localursecmon
+import ursecmon  # NOTE: ursecmon in same folder
 import logging
 import numpy as np
 
@@ -12,6 +12,7 @@ __license__ = "LGPLv3"
 class PyUR(object):
     def __init__(self, host, joint_vel, joint_acc, home_joint_config=None, workspace_limits=None):
 
+        self.is_robotiq = False
         self.joint_vel = joint_vel
         self.joint_acc = joint_acc
 
@@ -88,13 +89,14 @@ class PyUR(object):
             prog += "end\n"
         else:
             prog =  \
-            '''
+                '''
             def start_rg2():
                 set_tool_voltage(0)
                 sleep(1.0)
                 set_digital_out(8, False)
                 set_digital_out(9, False)
                 set_tool_voltage(24)
+                timeout = 0
                 while get_digital_in(9) == False:
                     timeout = timeout+1
                     # sleep(0.008)
@@ -110,17 +112,17 @@ class PyUR(object):
                 textmsg("beginning loop")
                 set_digital_out(9, False)
                 while True:
-                textmsg(count)
-                set_digital_out(8, True)
-                sleep(1)
-                set_digital_out(8, False)
-                sleep(1)
-                count = count + 1
+                    textmsg(count)
+                    set_digital_out(8, True)
+                    sleep(1)
+                    set_digital_out(8, False)
+                    sleep(1)
+                    count = count + 1
                 end
-            en
+            end
             '''
         self.logger.debug("Activating gripper")
-        self.send_program(prog)
+        # self.send_program(prog)
 
     # We also talk to Robotiq 2F-85 gripper through the UR5 "API"
 
@@ -159,8 +161,7 @@ class PyUR(object):
         # gripper_fully_closed = True
         return gripper_fully_closed
 
-
-   def check_grasp(self):
+    def check_grasp(self):
         if self.is_robotiq:
             prog = "def setAnalogOutToGripPos():\n"
             prog += self.socket_close_str
@@ -174,11 +175,10 @@ class PyUR(object):
             # return tool_pos > 9  # TODO
         else:
             # Gripper did not close all the way
-            return self.get_state('tool_data' > 0.26)
+            return self.get_state('gripper_width') > 0.26
             # tool_analog_input2 > 0.26
 
             # -- Data commands
-
 
     def get_state(self, subpackage):
         def get_joint_data(_log=True):
@@ -197,7 +197,8 @@ class PyUR(object):
                 pose = [pose["X"], pose["Y"], pose["Z"],
                         pose["Rx"], pose["Ry"], pose["Rz"]]
             if _log:
-                self.logger.debug("Received pose from robot: %s", str(pose))
+                self.logger.debug(
+                    "Received pose data from robot: %s", str(pose))
             return pose
 
         def get_gripper_width(_log=True):
@@ -207,8 +208,9 @@ class PyUR(object):
             else:
                 width = self.secom.get_tool_analog_in(2)
             if _log:
-                self.logger.debug("Received gripper (is robotiq? %s) width from
-                robot: %s" % (str(self.is_robotiq, str(width))
+                self.logger.debug(
+                    "Received gripper(is robotiq? % s) width from robot: % s" %
+                    (str(self.is_robotiq), str(width)))
             return width
 
         parse_functions = {'joint_data': get_joint_data,
@@ -283,7 +285,7 @@ class PyUR(object):
                 print('new orientation', orientation)
 
             prog += self._format_move("movel", np.concatenate((position, orientation)),
-                                   acc=acc, vel=vel, prefix="p")
+                                      acc=acc, vel=vel, prefix="p")
             prog += "end\n"
             self.send_program(prog)
         else:
@@ -341,7 +343,7 @@ class PyUR(object):
                     prog += "\tset_digital_out(8, True)"
 
             elif a_move["type"] == 'close':
-                if self.is_robotiq: 
+                if self.is_robotiq:
                     prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS",
                                                                           255,
                                                                           self.socket_name)
@@ -438,12 +440,11 @@ class PyUR(object):
         default_jvel = 15.0  # 10
         toss_jacc = 25  # 25.
         toss_jvel = 3.2  # 3.2
-        pretoss_jconf = \
-            np.asarray([0., -45., 90., -078.9, -90., 0.])*np.pi/180.0
+        pretoss_jconf = np.asarray(
+            [0., -45., 90., -078.9, -90., 0.])*np.pi/180.0
         # np.asarray([0., -45., 90., -098.9, -90., 0.]) * \
         # np.pi/180.0  # per email
-        posttoss_jconf = \
-            np.asarray([0., -065.8, 015.1, -130.1, -90., 0.]) * \
+        posttoss_jconf = np.asarray([0., -065.8, 015.1, -130.1, -90., 0.]) * \
             np.pi/180.0
         # np.asarray([0., -057.8, 035.1, -142.1, -90., 0.]) * \
         # np.pi/180.0  # per email
@@ -588,7 +589,10 @@ class PyUR(object):
             dist = [np.abs(actual_pose[j] - target[j]) for j in range(6)]
             self.logger.debug(
                 "distance to target is: %s, target dist is %s", dist, threshold)
-            if all([np.abs(actual_pose[j] - target[j]) < self.pose_tolerance[j] for j in range(6)]):
+            # if all([np.abs(actual_pose[j] - target[j]) < self.pose_tolerance[j] for j in range(6)]):
+            #  TODO: we are having some issue where the rx ry rz over ethernet !=
+            # pendant rx ry rz
+            if all([np.abs(actual_pose[j] - target[j]) < self.pose_tolerance[j] for j in range(3)]):
                 self.logger.debug(
                     "We are threshold(%s) close to target, move has ended", threshold)
                 return
