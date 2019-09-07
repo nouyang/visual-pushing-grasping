@@ -446,4 +446,3 @@ class Trainer(object):
 
         best_pix_ind = np.unravel_index(np.argmax(grasp_predictions), grasp_predictions.shape)
         return best_pix_ind
-
