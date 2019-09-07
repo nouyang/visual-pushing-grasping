@@ -10,6 +10,7 @@ from torch.autograd import Variable
 import torchvision
 import matplotlib.pyplot as plt
 import time
+import resnet
 
 
 class reinforcement_net(nn.Module):
@@ -22,7 +23,7 @@ class reinforcement_net(nn.Module):
         # self.grasp_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
 
         self.num_rotations = 16
-        self.perception_net = torchvision.models.resnet18(pretrained=True)
+        self.perception_net = resnet.resnet18()
 
         #torch.hub.load('pytorch/vision', 'resnet18', pretrained=True)
 
