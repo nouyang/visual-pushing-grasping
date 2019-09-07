@@ -44,9 +44,6 @@ def main(args):
     is_testing = args.is_testing
     # Maximum number of test runs per case/scenario
     max_test_trials = args.max_test_trials
-    # test_preset_cases = args.test_preset_cases
-    # test_preset_file = os.path.abspath(
-        # args.test_preset_file) if test_preset_cases else None
 
     # ------ Pre-loading and logging options ------
     load_snapshot = args.load_snapshot  # Load pre-trained snapshot of model?
@@ -108,14 +105,13 @@ def main(args):
 
     # Parallel thread to process network output and execute actions
     # -------------------------------------------------------------
-
     def process_actions():
         while True:
             if nonlocal_variables['executing_action']:
 
                 # Determine whether grasping or pushing should be executed based on network predictions
                 best_grasp_conf = np.max(grasp_predictions)
-                best_throw_conf = np.max(throw_predictions)
+                # best_throw_conf = np.max(throw_predictions)
                 print('Primitive confidence scores: %f (grasp), %f (throw)' %
                       (best_grasp_conf, best_throw_conf))
                 nonlocal_variables['primitive_action'] = 'grasp'
@@ -235,7 +231,6 @@ def main(args):
     action_thread.daemon = True
     action_thread.start()
     exit_called = False
-    # -------------------------------------------------------------
     # -------------------------------------------------------------
 
 

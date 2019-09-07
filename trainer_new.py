@@ -119,14 +119,14 @@ class Trainer(object):
         depth_heightmap_2x =  np.pad(depth_heightmap_2x, padding_width, 'constant', constant_values=0)
 
         # Pre-process color image (scale and normalize)
-        image_mean = [0.485, 0.456, 0.406]
+        image_mean = [0.485, 0.456, 0.406] # TODO: is this hardcoded?
         image_std = [0.229, 0.224, 0.225]
         input_color_image = color_heightmap_2x.astype(float)/255
         for c in range(3):
             input_color_image[:,:,c] = (input_color_image[:,:,c] - image_mean[c])/image_std[c]
 
         # Pre-process depth image (normalize)
-        image_mean = [0.01, 0.01, 0.01]
+        image_mean = [0.01, 0.01, 0.01] # TODO: is this hardcoded?
         image_std = [0.03, 0.03, 0.03]
         depth_heightmap_2x.shape = (depth_heightmap_2x.shape[0], depth_heightmap_2x.shape[1], 1)
         input_depth_image = np.concatenate((depth_heightmap_2x, depth_heightmap_2x, depth_heightmap_2x), axis=2)
