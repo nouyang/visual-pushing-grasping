@@ -29,3 +29,5 @@ visualization.grasp.png
 *.png
 
 real/*
+
+.idea

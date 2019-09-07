@@ -51,8 +51,7 @@ class reinforcement_net(nn.Module):
         self.output_prob = []
 
 
-    def forward(self, input_color_data, input_depth_data, is_volatile=False, specific_rotation=-1):
-
+    def forward(self, input_color_data, input_depth_data, physics_prediction, is_volatile=False, specific_rotation=-1):
     # if is_volatile:
         output_prob = []
         interm_feat = []
@@ -92,6 +91,13 @@ class reinforcement_net(nn.Module):
             # Compute intermediate features
             self.visual_features = self.perception_net.features(visual_input)
 
+            physics_prediction_image_shape = (
+                self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
+            )
+            physics_prediction_image = torch.ones(physics_prediction_image_shape, dtype=torch.dtype.float32) * physics_prediction
+
+            self.visual_features_with_physics_channel = torch.cat((self.visual_features, physics_prediction_image), dim=1)
+
             # Compute intermediate features
             # interm_push_color_feat = self.push_color_trunk.features(rotate_color)
             # interm_push_depth_feat = self.push_depth_trunk.features(rotate_depth)
@@ -115,4 +121,4 @@ class reinforcement_net(nn.Module):
             output_prob.append([nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.pushnet(interm_push_feat), flow_grid_after, mode='nearest')),
                                 nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.graspnet(interm_grasp_feat), flow_grid_after, mode='nearest'))])
 
-            return output_prob#, interm_feat
+        return output_prob#, interm_feat
