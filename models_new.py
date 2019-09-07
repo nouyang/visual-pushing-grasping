@@ -23,7 +23,7 @@ class reinforcement_net(nn.Module):
         # self.grasp_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
 
         self.num_rotations = 16
-        self.perception_net = resnet.resnet18()
+        self.perception_net = resnet.ResNet7(resnet.BasicBlock)
 
         #torch.hub.load('pytorch/vision', 'resnet18', pretrained=True)
 
