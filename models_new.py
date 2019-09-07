@@ -88,22 +88,21 @@ class reinforcement_net(nn.Module):
                                          mode='nearest')
             visual_input = torch.cat((rotate_color, rotate_depth), dim=1) #NOTE: maybe 3?
 
-            # Compute intermediate features
+            # TODO: pull out .features() from resnet
             self.visual_features = self.perception_net.features(visual_input)
 
             physics_prediction_image_shape = (
                 self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
             )
+            # Fill physics 'image' with same value (prediction) & concat to
+            # visual input
             physics_prediction_image = torch.ones(physics_prediction_image_shape, dtype=torch.dtype.float32) * physics_prediction
 
             self.visual_features_with_physics_channel = torch.cat((self.visual_features, physics_prediction_image), dim=1)
 
-            # Compute intermediate features
-            # interm_push_color_feat = self.push_color_trunk.features(rotate_color)
-            # interm_push_depth_feat = self.push_depth_trunk.features(rotate_depth)
-            # interm_push_feat = torch.cat((interm_push_color_feat, interm_push_depth_feat), dim=1)
-            # interm_feat.append([interm_push_feat, interm_grasp_feat])
 
+            # TODO: run code to understand shaping / unshaping
+            '''
             # Compute sample grid for rotation AFTER branches
             affine_mat_after = np.asarray([[np.cos(rotate_theta),
                                             np.sin(rotate_theta),
@@ -121,4 +120,5 @@ class reinforcement_net(nn.Module):
             output_prob.append([nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.pushnet(interm_push_feat), flow_grid_after, mode='nearest')),
                                 nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.graspnet(interm_grasp_feat), flow_grid_after, mode='nearest'))])
 
+            '''
         return output_prob#, interm_feat
