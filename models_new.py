@@ -10,6 +10,7 @@ from torch.autograd import Variable
 import torchvision
 import matplotlib.pyplot as plt
 import time
+import andys_models
 import resnet
 
 
@@ -19,34 +20,37 @@ class reinforcement_net(nn.Module):
         super(reinforcement_net, self).__init__()
         self.use_cuda = use_cuda
 
+        self.all_nets = andys_models.RegressionModel(num_input_channels=4)
+        self.all_nets.cuda()
+
         # self.push_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
         # self.grasp_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
 
         self.num_rotations = 16
 
-        self.perception_net = resnet.ResNet7(resnet.BasicBlock, num_input_filters=4)
-        self.perception_net = self.perception_net.cuda()
+        #self.perception_net = resnet.ResNet7(resnet.BasicBlock, num_input_filters=4)
+        #self.perception_net = self.perception_net.cuda()
 
         #torch.hub.load('pytorch/vision', 'resnet18', pretrained=True)
 
-        self.graspnet = nn.Sequential(OrderedDict([
-            ('grasp-norm0', nn.BatchNorm2d(2048)),
-            ('grasp-relu0', nn.ReLU(inplace=True)),
-            ('grasp-conv0', nn.Conv2d(2048, 64, kernel_size=1, stride=1, bias=False)),
-            ('grasp-norm1', nn.BatchNorm2d(64)),
-            ('grasp-relu1', nn.ReLU(inplace=True)),
-            ('grasp-conv1', nn.Conv2d(64, 1, kernel_size=1, stride=1, bias=False))
-            # ('grasp-upsample2', nn.Upsample(scale_factor=4, mode='bilinear'))
-        ]))
+        #self.graspnet = nn.Sequential(OrderedDict([
+        #    ('grasp-norm0', nn.BatchNorm2d(2048)),
+        #    ('grasp-relu0', nn.ReLU(inplace=True)),
+        #    ('grasp-conv0', nn.Conv2d(2048, 64, kernel_size=1, stride=1, bias=False)),
+        #    ('grasp-norm1', nn.BatchNorm2d(64)),
+        #    ('grasp-relu1', nn.ReLU(inplace=True)),
+        #    ('grasp-conv1', nn.Conv2d(64, 1, kernel_size=1, stride=1, bias=False))
+        #    # ('grasp-upsample2', nn.Upsample(scale_factor=4, mode='bilinear'))
+        #]))
 
         # Initialize network weights
-        for m in self.named_modules():
-            if 'push-' in m[0] or 'grasp-' in m[0]:
-                if isinstance(m[1], nn.Conv2d):
-                    nn.init.kaiming_normal(m[1].weight.data)
-                elif isinstance(m[1], nn.BatchNorm2d):
-                    m[1].weight.data.fill_(1)
-                    m[1].bias.data.zero_()
+        #for m in self.named_modules():
+        #    if 'push-' in m[0] or 'grasp-' in m[0]:
+        #        if isinstance(m[1], nn.Conv2d):
+        #            nn.init.kaiming_normal(m[1].weight.data)
+        #        elif isinstance(m[1], nn.BatchNorm2d):
+        #            m[1].weight.data.fill_(1)
+        #            m[1].bias.data.zero_()
 
         # Initialize output variable (for backprop)
         self.interm_feat = []
@@ -94,7 +98,7 @@ class reinforcement_net(nn.Module):
 
             # TODO: pull out .features() from resnet
             with torch.no_grad():
-                self.visual_features = self.perception_net(visual_input.cuda())
+                self.visual_features = self.all_nets.perception_net(visual_input.cuda())
 
             physics_prediction_image_shape = (
                 self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
@@ -109,29 +113,28 @@ class reinforcement_net(nn.Module):
 
             self.visual_features_with_physics_channel = torch.cat((self.visual_features, physics_images_t), dim=1)
 
-            interm_feat.append(self.visual_features)
+            with torch.no_grad():
+                self.grasp_output = self.all_nets.grasp_net(self.visual_features_with_physics_channel)
 
-            # TODO: run code to understand shaping / unshaping
-            '''
+            #interm_feat.append(self.visual_features)
+
             # Compute sample grid for rotation AFTER branches
             affine_mat_after = np.asarray([[np.cos(rotate_theta),
                                             np.sin(rotate_theta),
                                             0],
                                            [-np.sin(rotate_theta),
                                                 np.cos(rotate_theta), 0]])
-            affine_mat_after.shape = (2,3,1)
+            affine_mat_after = np.tile(affine_mat_after, reps=[len(physics_prediction), 1, 1])
+            affine_mat_after.shape = (2, 3, len(physics_prediction))
             affine_mat_after = torch.from_numpy(affine_mat_after).permute(2,0,1).float()
             # if self.use_cuda:
             flow_grid_after = F.affine_grid(Variable(affine_mat_after,
                                                      requires_grad=False).cuda(),
-                                            interm_push_feat.data.size())
-        
-            # Forward pass through branches, undo rotation on output predictions, upsample results
-            output_prob.append([nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.pushnet(interm_push_feat), flow_grid_after, mode='nearest')),
-                                nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.graspnet(interm_grasp_feat), flow_grid_after, mode='nearest'))])
+                                            self.grasp_output.data.size())
+            self.grasp_output = F.grid_sample(self.grasp_output, flow_grid_after, mode='nearest')
 
-            '''
+            output_prob.append(self.grasp_output)
 
-        return interm_feat
+        return output_prob
         #return self.visual_features, self.visual_features_with_physics_channel
         #return output_prob#, interm_feat
