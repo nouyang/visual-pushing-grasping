@@ -21,45 +21,41 @@ class Robot(object):
                  home_joint_config=None):
 
         self.orig = False
+        self.is_sim = False 
 
-        # If in simulation...
-        if self.is_sim:
-            pass
-        # If in real-settings...
-        else:
-            # self.gripper = Robotiq_Two_Finger_Gripper(self.r)
+        # self.gripper = Robotiq_Two_Finger_Gripper(self.r)
 
-            # Default joint speed configuration
-            # self.joint_acc = 8 # Safe: 1.4
-            # self.joint_vel = 3 # Safe: 1.05
-            self.joint_acc = 1.0  # Safe when set 30% spe71ed on pendant
-            self.joint_vel = 0.7
+        # Default joint speed configuration
+        # self.joint_acc = 8 # Safe: 1.4
+        # self.joint_vel = 3 # Safe: 1.05
+        self.joint_acc = 1.0  # Safe when set 30% spe71ed on pendant
+        self.joint_vel = 0.7
 
-            # Connect to robot client
-            # self.tcp_host_ip = tcp_host_ip
-            # self.tcp_port = tcp_port
+        # Connect to robot client
+        # self.tcp_host_ip = tcp_host_ip
+        # self.tcp_port = tcp_port
 
-            # NOTE: port is assumed to be 30002
-            self.workspace_limits = workspace_limits
+        # NOTE: port is assumed to be 30002
+        self.workspace_limits = workspace_limits
 
-            self.r = PyUR(tcp_host_ip, self.joint_vel,
-                          self.joint_acc, home_joint_config=home_joint_config,
-                          workspace_limits=workspace_limits)
+        self.r = PyUR(tcp_host_ip, self.joint_vel,
+                      self.joint_acc, home_joint_config=home_joint_config,
+                      workspace_limits=workspace_limits)
 
-            # Move robot to home pose
-            self.r.go_home()
-            # self.r.activate_gripper()
-            # self.r.close_gripper()
-            # self.r.open_gripper()
+        # Move robot to home pose
+        self.r.go_home()
+        # self.r.activate_gripper()
+        # self.r.close_gripper()
+        # self.r.open_gripper()
 
-            # Fetch RGB-D data from RealSense camera
-            self.camera = Camera()
-            self.cam_intrinsics = self.camera.intrinsics
+        # Fetch RGB-D data from RealSense camera
+        self.camera = Camera()
+        self.cam_intrinsics = self.camera.intrinsics
 
-            # Load camera pose (from running calibrate.py), intrinsics and depth scale
-            self.cam_pose = np.loadtxt("real/camera_pose.txt", delimiter=" ")
-            self.cam_depth_scale = np.loadtxt(
-                "real/camera_depth_scale.txt", delimiter=" ")
+        # Load camera pose (from running calibrate.py), intrinsics and depth scale
+        self.cam_pose = np.loadtxt("real/camera_pose.txt", delimiter=" ")
+        self.cam_depth_scale = np.loadtxt(
+            "real/camera_depth_scale.txt", delimiter=" ")
 
     def get_camera_data(self):
 
