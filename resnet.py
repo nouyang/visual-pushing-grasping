@@ -210,7 +210,7 @@ class ResNet(nn.Module):
 class ResNet7(nn.Module):
 
     def __init__(self, block, num_classes=10, zero_init_residual=False, groups=1, width_per_group=64,
-                 replace_stride_with_dilation=None, norm_layer=None):
+                 replace_stride_with_dilation=None, norm_layer=None, num_input_filters=3):
 
         super(ResNet7, self).__init__()
 
@@ -229,7 +229,7 @@ class ResNet7(nn.Module):
 
         self.groups = groups
         self.base_width = width_per_group
-        self.conv1 = nn.Conv2d(3, self.inplanes, kernel_size=7, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(num_input_filters, self.inplanes, kernel_size=7, stride=1, padding=1, bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -289,9 +289,9 @@ class ResNet7(nn.Module):
 
         x = self.features(x)
 
-        x = self.avgpool(x)
-        x = torch.flatten(x, 1)
-        x = self.fc(x)
+        #x = self.avgpool(x)
+        #x = torch.flatten(x, 1)
+        #x = self.fc(x)
 
         return x
 

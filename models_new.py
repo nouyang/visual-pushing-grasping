@@ -23,10 +23,11 @@ class reinforcement_net(nn.Module):
         # self.grasp_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
 
         self.num_rotations = 16
-        self.perception_net = resnet.ResNet7(resnet.BasicBlock)
+
+        self.perception_net = resnet.ResNet7(resnet.BasicBlock, num_input_filters=4)
+        self.perception_net = self.perception_net.cuda()
 
         #torch.hub.load('pytorch/vision', 'resnet18', pretrained=True)
-
 
         self.graspnet = nn.Sequential(OrderedDict([
             ('grasp-norm0', nn.BatchNorm2d(2048)),
@@ -66,8 +67,10 @@ class reinforcement_net(nn.Module):
                                              np.sin(-rotate_theta),
                                              0],[-np.sin(-rotate_theta),
                                                  np.cos(-rotate_theta), 0]])
-            affine_mat_before.shape = (2,3,1)
-            affine_mat_before = torch.from_numpy(affine_mat_before).permute(2,0,1).float()
+            affine_mat_before = np.tile(affine_mat_before, reps=[len(physics_prediction), 1, 1])
+            affine_mat_before.shape = (2, 3, len(physics_prediction))
+            affine_mat_before = torch.from_numpy(affine_mat_before).permute(2,0,1).float().cuda()
+
             if self.use_cuda:
                 flow_grid_before = F.affine_grid(Variable(affine_mat_before,
                                                           requires_grad=False).cuda(),
@@ -90,17 +93,23 @@ class reinforcement_net(nn.Module):
             visual_input = torch.cat((rotate_color, rotate_depth), dim=1) #NOTE: maybe 3?
 
             # TODO: pull out .features() from resnet
-            self.visual_features = self.perception_net.features(visual_input)
+            with torch.no_grad():
+                self.visual_features = self.perception_net(visual_input.cuda())
 
             physics_prediction_image_shape = (
                 self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
             )
             # Fill physics 'image' with same value (prediction) & concat to
             # visual input
-            physics_prediction_image = torch.ones(physics_prediction_image_shape, dtype=torch.dtype.float32) * physics_prediction
+            one_images = np.ones(physics_prediction_image_shape, dtype=np.float32)
+            physics_prediction = np.array(physics_prediction, dtype=np.float32)
 
-            self.visual_features_with_physics_channel = torch.cat((self.visual_features, physics_prediction_image), dim=1)
+            physics_images = one_images * physics_prediction[:, np.newaxis, np.newaxis, np.newaxis]
+            physics_images_t = torch.from_numpy(physics_images).cuda()
 
+            self.visual_features_with_physics_channel = torch.cat((self.visual_features, physics_images_t), dim=1)
+
+            interm_feat.append(self.visual_features)
 
             # TODO: run code to understand shaping / unshaping
             '''
@@ -122,4 +131,7 @@ class reinforcement_net(nn.Module):
                                 nn.Upsample(scale_factor=16, mode='bilinear').forward(F.grid_sample(self.graspnet(interm_grasp_feat), flow_grid_after, mode='nearest'))])
 
             '''
-        return output_prob#, interm_feat
+
+        return interm_feat
+        #return self.visual_features, self.visual_features_with_physics_channel
+        #return output_prob#, interm_feat
