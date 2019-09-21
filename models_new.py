@@ -103,6 +103,7 @@ class reinforcement_net(nn.Module):
             physics_prediction_image_shape = (
                 self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
             )
+
             # Fill physics 'image' with same value (prediction) & concat to
             # visual input
             one_images = np.ones(physics_prediction_image_shape, dtype=np.float32)
