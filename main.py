@@ -55,12 +55,14 @@ def main(args):
         # workspace_limits = np.asarray(
             # [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
         workspace_limits = np.asarray(
-            [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
+            # [[-0.700, -0.350], [-0.125, 0.125], [-0.300, -0.000]])  # grasp pos
+            [[-0.600, -0.300], [-0.125, 0.100], [-0.300, -0.100]])  # grasp pos
         # [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.220]])  # calib pos
 
     # TODO: HARDCODED
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
-    heightmap_resolution = 0.0011
+    heightmap_resolution = 0.00115
+
     random_seed = args.random_seed
     force_cpu = args.force_cpu
 
@@ -142,12 +144,14 @@ def main(args):
             if nonlocal_variables['executing_action']:
 
                 # Determine whether grasping or pushing should be executed based on network predictions
-                best_push_conf = np.max(push_predictions)
+                #best_push_conf = np.max(push_predictions)
                 best_grasp_conf = np.max(grasp_predictions)
-                print('Primitive confidence scores: %f (push), %f (grasp)' %
-                      (best_push_conf, best_grasp_conf))
+                print('Primitive confidence scores: %f (grasp)' % (best_grasp_conf))
+                #print('Primitive confidence scores: %f (push), %f (grasp)' %
+                #      (best_push_conf, best_grasp_conf))
                 nonlocal_variables['primitive_action'] = 'grasp'
                 explore_actions = False
+                """
                 if not grasp_only:
                     if is_testing and method == 'reactive':
                         if best_push_conf > 2*best_grasp_conf:
@@ -165,6 +169,8 @@ def main(args):
                     else:
                         print('Strategy: exploit (exploration probability: %f)' % (
                             explore_prob))
+                """
+
                 trainer.is_exploit_log.append([0 if explore_actions else 1])
                 logger.write_to_log('is-exploit', trainer.is_exploit_log)
 
@@ -377,7 +383,7 @@ def main(args):
 
             # TODO: edit
             # Run forward pass with network to get affordances
-            push_predictions, grasp_predictions, state_feat = trainer.forward(
+            grasp_predictions = trainer.forward(
                 color_heightmap, valid_depth_heightmap, is_volatile=True)
             # print("DEBUG: Grasp predictions", grasp_predictions)
 
@@ -426,7 +432,7 @@ def main(args):
             # Adjust exploration probability
             if not is_testing:
                 explore_prob = max(
-                    0.5 * np.power(0.9998, trainer.iteration),0.1) if explore_rate_decay else 0.5
+                    0.5 * np.power(0.9998, trainer.iteration), 0.1) if explore_rate_decay else 0.5
 
             # Do sampling for experience replay
             if experience_replay and not is_testing:
@@ -446,21 +452,21 @@ def main(args):
                         sample_reward_value = 0 if prev_reward_value == 1 else 1
 
                 # Get samples of the same primitive but with different results
-                sample_ind = np.argwhere(np.logical_and(np.asarray(trainer.reward_value_log)[1:trainer.iteration,0] == sample_reward_value, np.asarray(
-                    trainer.executed_action_log)[1:trainer.iteration,0] == sample_primitive_action_id))
+                sample_ind = np.argwhere(np.logical_and(np.asarray(trainer.reward_value_log)[1:trainer.iteration, 0] == sample_reward_value, np.asarray(
+                    trainer.executed_action_log)[1:trainer.iteration, 0] == sample_primitive_action_id))
 
                 if sample_ind.size > 0:
 
                     # Find sample with highest surprise value
                     if method == 'reactive':
                         sample_surprise_values = np.abs(np.asarray(trainer.predicted_value_log)[
-                                                        sample_ind[:,0]] - (1 - sample_reward_value))
+                                                        sample_ind[:, 0]] - (1 - sample_reward_value))
                     elif method == 'reinforcement':
                         sample_surprise_values = np.abs(np.asarray(trainer.predicted_value_log)[
-                                                        sample_ind[:,0]] - np.asarray(trainer.label_value_log)[sample_ind[:,0]])
+                                                        sample_ind[:, 0]] - np.asarray(trainer.label_value_log)[sample_ind[:, 0]])
                     sorted_surprise_ind = np.argsort(
-                        sample_surprise_values[:,0])
-                    sorted_sample_ind = sample_ind[sorted_surprise_ind,0]
+                        sample_surprise_values[:, 0])
+                    sorted_sample_ind = sample_ind[sorted_surprise_ind, 0]
                     pow_law_exp = 2
                     rand_sample_ind = int(
                         np.round(np.random.power(pow_law_exp, 1)*(sample_ind.size-1)))
@@ -479,8 +485,9 @@ def main(args):
                         np.float32)/100000
 
                     # Compute forward pass with sample
-                    sample_push_predictions, sample_grasp_predictions, sample_state_feat = trainer.forward(
-                        sample_color_heightmap, sample_depth_heightmap, is_volatile=True)
+                    with torch.no_grad():
+                        sample_grasp_predictions = trainer.forward(
+                            sample_color_heightmap, sample_depth_heightmap, is_volatile=True)
 
                     # Load next sample RGB-D heightmap
                     next_sample_color_heightmap = cv2.imread(os.path.join(
@@ -500,7 +507,7 @@ def main(args):
 
                     # Get labels for sample and backpropagate
                     sample_best_pix_ind = (np.asarray(trainer.executed_action_log)[
-                                           sample_iteration,1:4]).astype(int)
+                                           sample_iteration, 1:4]).astype(int)
                     trainer.backprop(sample_color_heightmap, sample_depth_heightmap, sample_primitive_action,
                                      sample_best_pix_ind, trainer.label_value_log[sample_iteration])
 
@@ -542,7 +549,7 @@ def main(args):
         prev_push_success = nonlocal_variables['push_success']
         prev_grasp_success = nonlocal_variables['grasp_success']
         prev_primitive_action = nonlocal_variables['primitive_action']
-        prev_push_predictions = push_predictions.copy()
+        #prev_push_predictions = push_predictions.copy()
         prev_grasp_predictions = grasp_predictions.copy()
         prev_best_pix_ind = nonlocal_variables['best_pix_ind']
 

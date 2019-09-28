@@ -27,7 +27,7 @@ class reinforcement_net(nn.Module):
             else:
                 self.device = torch.device("cpu")
 
-        self.all_nets = andys_models.RegressionModel(num_input_channels=4)
+        self.all_nets = andys_models.RegressionModel(num_input_channels=6)
         self.all_nets.to(device)
 
         # self.push_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)

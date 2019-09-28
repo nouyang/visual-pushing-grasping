@@ -58,10 +58,11 @@ class Robot(URRobot):
         trans.orient = orient
         self.set_pose(trans, acc, vel, wait=wait, threshold=threshold)
 
-    def translate_tool(self, vect, acc=0.01, vel=0.01, wait=True, threshold=None):
+    def translate_tool(self, vect, acc=0.01, vel=0.01, wait=False, threshold=None):
         """
         move tool in tool coordinate, keeping orientation
         """
+        print('translating')
         t = m3d.Transform()
         if not isinstance(vect, m3d.Vector):
             vect = m3d.Vector(vect)
@@ -90,7 +91,8 @@ class Robot(URRobot):
         """
         pose_via = self.csys * m3d.Transform(pose_via)
         pose_to = self.csys * m3d.Transform(pose_to)
-        pose = URRobot.movec(self, pose_via.pose_vector, pose_to.pose_vector, acc=acc, vel=vel, wait=wait, threshold=threshold)
+        pose = URRobot.movec(self, pose_via.pose_vector, pose_to.pose_vector,
+                             acc=acc, vel=vel, wait=wait, threshold=threshold)
         if pose is not None:
             return self.csys.inverse * m3d.Transform(pose)
 
@@ -102,7 +104,8 @@ class Robot(URRobot):
         """
         self.logger.debug("Setting pose to %s", trans.pose_vector)
         t = self.csys * trans
-        pose = URRobot.movex(self, command, t.pose_vector, acc=acc, vel=vel, wait=wait, threshold=threshold)
+        pose = URRobot.movex(self, command, t.pose_vector,
+                             acc=acc, vel=vel, wait=wait, threshold=threshold)
         if pose is not None:
             return self.csys.inverse * m3d.Transform(pose)
 
@@ -201,7 +204,8 @@ class Robot(URRobot):
 
     def movex_tool(self, command, pose, acc=0.01, vel=0.01, wait=True, threshold=None):
         t = m3d.Transform(pose)
-        self.add_pose_tool(t, acc, vel, wait=wait, command=command, threshold=threshold)
+        self.add_pose_tool(t, acc, vel, wait=wait,
+                           command=command, threshold=threshold)
 
     def getl(self, wait=False, _log=True, roundto=False):
         """

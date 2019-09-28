@@ -21,7 +21,7 @@ class Robot(object):
                  home_joint_config=None):
 
         self.orig = False
-        self.is_sim = False 
+        self.is_sim = False
 
         # self.gripper = Robotiq_Two_Finger_Gripper(self.r)
 
@@ -132,11 +132,11 @@ class Robot(object):
             # Attempt grasp
             tool_orientation[2] = 0
             position[2] += 0.1
-            above = {'type': p, 'pose': np.append(position, tool_orientation),
+            above = {'type': 'p', 'pose': np.append(position, tool_orientation),
                      'acc': self.joint_acc * 0.5, 'vel': self.joint_vel * 0.5,
                      'rad': 0.09}
             position[2] -= 0.1
-            down = {'type': p, 'pose': np.append(position, tool_orientation),
+            down = {'type': 'p', 'pose': np.append(position, tool_orientation),
                     'acc': self.joint_acc * 0.1, 'vel': self.joint_vel * 0.1,
                     'rad': 0.00}
             # Block until robot reaches target tool position and gripper fingers have stopped moving
