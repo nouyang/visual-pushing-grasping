@@ -16,9 +16,16 @@ import resnet
 
 class reinforcement_net(nn.Module):
 
-    def __init__(self, device):  # , snapshot=None
+    def __init__(self, use_cuda=False, device=None):  # , snapshot=None
         super(reinforcement_net, self).__init__()
-        self.device = device
+
+        if device is not None:
+            self.device = device
+        else:
+            if use_cuda:
+                self.device = torch.device("cuda:0")
+            else:
+                self.device = torch.device("cpu")
 
         self.all_nets = andys_models.RegressionModel(num_input_channels=4)
         self.all_nets.to(device)

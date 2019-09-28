@@ -12,7 +12,7 @@ def main(args):
 
     num_rotations = 16
 
-    net = models.reinforcement_net(device)
+    net = models.reinforcement_net(device=device)
     net.num_rotations = num_rotations
 
     input_color_data = np.random.uniform(0, 1, size=(6, 3, 140, 180)).astype(np.float32)
