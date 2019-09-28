@@ -1,3 +1,14 @@
+# To run
+
+```
+python -m playground.run_models_new --device "cuda:0"  --cifar
+
+python main.py --tcp_host_ip '10.75.15.94' --tcp_port 30002 \
+--grasp_only --is_testing 
+ --save_visualizations
+```
+
+
 # Visual Pushing and Grasping Toolbox
 
 Visual Pushing and Grasping (VPG) is a method for training robotic agents to learn how to plan complementary pushing and grasping actions for manipulation (*e.g.* for unstructured pick-and-place applications). VPG operates directly on visual observations (RGB-D images), learns from trial and error, trains quickly, and generalizes to new objects and scenarios.
