@@ -69,8 +69,14 @@ class reinforcement_net(nn.Module):
         interm_feat = []
         physics_prediction = [1.0] * input_color_data.shape[0]
 
-      # Apply rotations to images
+        # Apply rotations to images
         for rotate_idx in range(self.num_rotations):
+
+            # do only one rotation
+            if specific_rotation is not None and 0 <= specific_rotation < self.num_rotations:
+                if rotate_idx != specific_rotation:
+                    continue
+
             rotate_theta = np.radians(rotate_idx*(360/self.num_rotations))
 
             # Compute sample grid for rotation BEFORE neural network
@@ -126,7 +132,7 @@ class reinforcement_net(nn.Module):
             #with torch.no_grad():
             self.grasp_output = self.all_nets.grasp_net(self.visual_features_with_physics_channel)
 
-            print(torch.cuda.memory_allocated() / 1000000000, "GB")
+            #print(torch.cuda.memory_allocated() / 1000000000, "GB")
 
             # interm_feat.append(self.visual_features)
 
