@@ -1,0 +1,14 @@
+
+def test_simple_rg2():
+    set_digital_out(9, False)
+    sleep(0.5)
+    set_digital_out(8, True)
+    #set_digital_out(9, False)
+    sleep(0.5)
+    #set_digital_out(9, True)
+    set_digital_out(8, False)
+    sleep(0.5)
+    textmsg("done")
+
+
+end

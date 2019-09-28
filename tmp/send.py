@@ -13,7 +13,10 @@ print("Starting Program")
 
 
 # f = open("./rg2_new.script", "rb")
-f = open("./olmia.script", "rb")
+f = open("./tmp/olmia.script", "rb")
+# f = open("./tmp/rg2test.script", "rb")
+f = open("./tmp/test_simple_rg2.script", "rb")
+
 # f = open ("setzero.script", "rb")  #Robotiq FT sensor
 
 l = f.read(1024)
