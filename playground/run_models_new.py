@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import torchvision.datasets as datasets
 import models
 
 
@@ -17,6 +18,11 @@ def main(args):
 
     input_color_data = np.random.uniform(0, 1, size=(6, 3, 140, 180)).astype(np.float32)
     input_depth_data = np.random.uniform(0, 1, size=(6, 1, 140, 180)).astype(np.float32)
+
+    mnist_trainset = datasets.MNIST(root="./data", train=True, download=True, transform=None)
+
+    print(mnist_trainset[0].shape)
+
     physics_prediction = [1.0]
 
     input_color_data_t = torch.from_numpy(input_color_data).to(device)
