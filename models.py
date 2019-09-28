@@ -16,12 +16,12 @@ import resnet
 
 class reinforcement_net(nn.Module):
 
-    def __init__(self, use_cuda):  # , snapshot=None
+    def __init__(self, device):  # , snapshot=None
         super(reinforcement_net, self).__init__()
-        self.use_cuda = use_cuda
+        self.device = device
 
         self.all_nets = andys_models.RegressionModel(num_input_channels=4)
-        self.all_nets.cuda()
+        self.all_nets.to(device)
 
         # self.push_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
         # self.grasp_color_trunk = torchvision.models.densenet.densenet121(pretrained=True)
@@ -71,38 +71,33 @@ class reinforcement_net(nn.Module):
                                              np.sin(-rotate_theta),
                                              0], [-np.sin(-rotate_theta),
                                                   np.cos(-rotate_theta), 0]])
+
             affine_mat_before = np.tile(affine_mat_before, reps=[
                                         len(physics_prediction), 1, 1])
-            affine_mat_before.shape = (2, 3, len(physics_prediction))
-            affine_mat_before = torch.from_numpy(
-                affine_mat_before).permute(2, 0, 1).float().cuda()
 
-            if self.use_cuda:
-                flow_grid_before = F.affine_grid(Variable(affine_mat_before,
-                                                          requires_grad=False).cuda(),
-                                                 input_color_data.size())
-            else:
-                flow_grid_before = F.affine_grid(Variable(affine_mat_before,
-                                                          requires_grad=False),
-                                                 input_color_data.size())
+            affine_mat_before = torch.from_numpy(
+                affine_mat_before).float().to(self.device)
+
+            flow_grid_before = F.affine_grid(Variable(affine_mat_before,
+                                                      requires_grad=False).to(self.device),
+                                             input_color_data.size())
+
 
             # Rotate images clockwise
             # if self.use_cuda:
             rotate_color = F.grid_sample(Variable(input_color_data,
-                                                  volatile=True).cuda(),
+                                                  volatile=True).to(self.device),
                                          flow_grid_before,
                                          mode='nearest')
             rotate_depth = F.grid_sample(Variable(input_depth_data,
-                                                  volatile=True).cuda(),
+                                                  volatile=True).to(self.device),
                                          flow_grid_before,
                                          mode='nearest')
-            visual_input = torch.cat(
-                (rotate_color, rotate_depth), dim=1)  # NOTE: maybe 3?
 
-            # TODO: pull out .features() from resnet
-            with torch.no_grad():
-                self.visual_features = self.all_nets.perception_net(
-                    visual_input.cuda())
+            visual_input = torch.cat((rotate_color, rotate_depth), dim=1)  # NOTE: maybe 3?
+
+            #with torch.no_grad():
+            self.visual_features = self.all_nets.perception_net(visual_input.to(self.device))
 
             physics_prediction_image_shape = (
                 self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
@@ -116,14 +111,15 @@ class reinforcement_net(nn.Module):
 
             physics_images = one_images * \
                 physics_prediction[:, np.newaxis, np.newaxis, np.newaxis]
-            physics_images_t = torch.from_numpy(physics_images).cuda()
+            physics_images_t = torch.from_numpy(physics_images).to(self.device)
 
             self.visual_features_with_physics_channel = torch.cat(
                 (self.visual_features, physics_images_t), dim=1)
 
-            with torch.no_grad():
-                self.grasp_output = self.all_nets.grasp_net(
-                    self.visual_features_with_physics_channel)
+            #with torch.no_grad():
+            self.grasp_output = self.all_nets.grasp_net(self.visual_features_with_physics_channel)
+
+            print(torch.cuda.memory_allocated() / 1000000000, "GB")
 
             # interm_feat.append(self.visual_features)
 
@@ -135,12 +131,11 @@ class reinforcement_net(nn.Module):
                                             np.cos(rotate_theta), 0]])
             affine_mat_after = np.tile(affine_mat_after, reps=[
                                        len(physics_prediction), 1, 1])
-            affine_mat_after.shape = (2, 3, len(physics_prediction))
             affine_mat_after = torch.from_numpy(
-                affine_mat_after).permute(2, 0, 1).float()
-            # if self.use_cuda:
+                affine_mat_after).float()
+
             flow_grid_after = F.affine_grid(Variable(affine_mat_after,
-                                                     requires_grad=False).cuda(),
+                                                     requires_grad=False).to(self.device),
                                             self.grasp_output.data.size())
             self.grasp_output = F.grid_sample(
                 self.grasp_output, flow_grid_after, mode='nearest')

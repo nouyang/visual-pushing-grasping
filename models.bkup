@@ -122,8 +122,15 @@ class reactive_net(nn.Module):
             
             # Compute sample grid for rotation BEFORE branches
             affine_mat_before = np.asarray([[np.cos(-rotate_theta), np.sin(-rotate_theta), 0],[-np.sin(-rotate_theta), np.cos(-rotate_theta), 0]])
-            affine_mat_before.shape = (2,3,1)
+
+            # (1, 2, 3)
+
+            affine_mat_before.shape = (2, 3, 1)
+
+
             affine_mat_before = torch.from_numpy(affine_mat_before).permute(2,0,1).float()
+
+
             if self.use_cuda:
                 flow_grid_before = F.affine_grid(Variable(affine_mat_before, requires_grad=False).cuda(), input_color_data.size())
             else:

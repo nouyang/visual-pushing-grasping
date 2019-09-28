@@ -1,34 +1,48 @@
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import models_new
+import models
 
 
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+def main(args):
 
-net = models_new.reinforcement_net(True)
+    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.device)
 
-input_color_data = np.random.uniform(0, 1, size=(1, 3, 600, 600)).astype(np.float32)
-input_depth_data = np.random.uniform(0, 1, size=(1, 1, 600, 600)).astype(np.float32)
-physics_prediction = [1.0]
+    num_rotations = 16
 
-input_color_data_t = torch.from_numpy(input_color_data).cuda()
-input_depth_data_t = torch.from_numpy(input_depth_data).cuda()
+    net = models.reinforcement_net(device)
+    net.num_rotations = num_rotations
 
-#input_color_data_t.to(device)
-#input_depth_data_t.to(device)
+    input_color_data = np.random.uniform(0, 1, size=(6, 3, 140, 180)).astype(np.float32)
+    input_depth_data = np.random.uniform(0, 1, size=(6, 1, 140, 180)).astype(np.float32)
+    physics_prediction = [1.0]
 
-outputs_t = net.forward(input_color_data_t, input_depth_data_t, physics_prediction)
-outputs = [ft.cpu().numpy() for ft in outputs_t]
+    input_color_data_t = torch.from_numpy(input_color_data).to(device)
+    input_depth_data_t = torch.from_numpy(input_depth_data).to(device)
+
+    if args.no_grad:
+        with torch.no_grad():
+            outputs_t = net.forward(input_color_data_t, input_depth_data_t, physics_prediction)
+    else:
+        outputs_t = net.forward(input_color_data_t, input_depth_data_t, physics_prediction)
+
+    outputs = [ft.detach().cpu().numpy() for ft in outputs_t]
+
+    for rot_idx in range(num_rotations):
+        plt.subplot(4, 4, rot_idx + 1)
+
+        img = outputs[rot_idx][0, 0, :, :]
+        # img = np.transpose(img, axes=(1, 2, 0))
+
+        plt.imshow(img)
+
+    plt.show()
 
 
-for rot_idx in range(16):
-
-    plt.subplot(4, 4, rot_idx + 1)
-
-    img = outputs[rot_idx][0, 0, :, :]
-    #img = np.transpose(img, axes=(1, 2, 0))
-
-    plt.imshow(img)
-
-plt.show()
+parser = argparse.ArgumentParser()
+parser.add_argument("--device", default="cuda:0")
+parser.add_argument("--no-grad", default=False, action="store_true")
+parsed = parser.parse_args()
+main(parsed)
