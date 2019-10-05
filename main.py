@@ -42,24 +42,11 @@ def main(args):
         # NOTE: orig
         # workspace_limits = np.asarray(
             # [[0.3, 0.748], [-0.224, 0.224], [-0.255, -0.1]])
-
-        # NOTE: mine
-        # workspace_limits = np.asarray(
-            # [[0.250, 0.700], [-0.250, 0.220], [0.195, 0.460]])
-
-        # NOTE: D415
-        # workspace_limits = np.asarray(
-            # [[0.340, 0.600], [-0.250, 0.150], [0.200, 0.460]])
-
-        # NOTE: D415 foam (should this include the bin?)
-        # workspace_limits = np.asarray(
-            # [[-0.584, -0.380], [.100, 0.325], [-0.250, -0.100]])
+        # NOTE: 5 Oct 2019
         workspace_limits = np.asarray(
-            # [[-0.700, -0.350], [-0.125, 0.125], [-0.300, -0.000]])  # grasp pos
-            [[-0.600, -0.300], [-0.125, 0.100], [-0.300, -0.100]])  # grasp pos
-        # [[-0.700, -0.350], [-0.125, 0.225], [-0.420, -0.220]])  # calib pos
+            #        [[-0.600, -0.300], [-0.250, 0.150], [-0.300, -0.200]])
+            [[-0.850, -0.520], [-0.250, 0.150], [-0.480, -0.200]])
 
-    # TODO: HARDCODED
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
     heightmap_resolution = 0.00115
 
@@ -146,17 +133,16 @@ def main(args):
                 # Determine whether grasping or pushing should be executed based on network predictions
                 #best_push_conf = np.max(push_predictions)
                 best_grasp_conf = np.max(grasp_predictions)
-                print('Primitive confidence scores: %f (grasp)' % (best_grasp_conf))
-                #print('Primitive confidence scores: %f (push), %f (grasp)' %
-                #      (best_push_conf, best_grasp_conf))
+                print('Primitive confidence scores: %f (grasp)' %
+                      best_grasp_conf)
                 nonlocal_variables['primitive_action'] = 'grasp'
                 explore_actions = False
+
                 """
                 if not grasp_only:
                     if is_testing and method == 'reactive':
                         if best_push_conf > 2*best_grasp_conf:
-                            nonlocal_variables['primitive_action'] = 'push'
-                    else:
+                     else:
                         if best_push_conf > best_grasp_conf:
                             nonlocal_variables['primitive_action'] = 'push'
                     explore_actions = np.random.uniform() < explore_prob
@@ -173,6 +159,11 @@ def main(args):
 
                 trainer.is_exploit_log.append([0 if explore_actions else 1])
                 logger.write_to_log('is-exploit', trainer.is_exploit_log)
+
+                if nonlocal_variables['primitive_action'] != 'grasp':
+                    raise ValueError("Pushing not used in this project.")
+
+                print("valid depth heightmap size:", valid_depth_heightmap.shape)
 
                 # If heuristic bootstrapping is enabled: if change has not been detected more than 2 times, execute heuristic algorithm to detect grasps/pushes
                 # NOTE: typically not necessary and can reduce final performance.
@@ -272,18 +263,18 @@ def main(args):
 
                 # Visualize executed primitive, and affordances
                 if save_visualizations:
-                    """
-                    push_pred_vis = trainer.get_prediction_vis(
-                        push_predictions, color_heightmap, nonlocal_variables['best_pix_ind'])
-                    logger.save_visualizations(
-                        trainer.iteration, push_pred_vis, 'push')
-                    cv2.imwrite('visualization.push.png', push_pred_vis)
+                    # push_pred_vis = trainer.get_prediction_vis(
+                    #    push_predictions, color_heightmap, nonlocal_variables['best_pix_ind'])
+                    # logger.save_visualizations(
+                    #    trainer.iteration, push_pred_vis, 'push')
+                    #cv2.imwrite('visualization.push.png', push_pred_vis)
+
+                    # TODO: ValueError: operands could not be broadcast together with shapes (364,273,3) (364,364,3)
                     grasp_pred_vis = trainer.get_prediction_vis(
                         grasp_predictions, color_heightmap, nonlocal_variables['best_pix_ind'])
                     logger.save_visualizations(
                         trainer.iteration, grasp_pred_vis, 'grasp')
                     cv2.imwrite('visualization.grasp.png', grasp_pred_vis)
-                    """
 
                 # Initialize variables that influence reward
                 nonlocal_variables['push_success'] = False
@@ -333,6 +324,7 @@ def main(args):
         print("Thsi is the deph scale", robot.cam_depth_scale)
         color_heightmap, depth_heightmap = utils.get_heightmap(
             color_img, depth_img, robot.cam_intrinsics, robot.cam_pose, workspace_limits, heightmap_resolution)
+        print('output from utils, depth heighmap', depth_heightmap.shape)
         valid_depth_heightmap = depth_heightmap.copy()
         valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
 
@@ -383,6 +375,7 @@ def main(args):
 
             # TODO: edit
             # Run forward pass with network to get affordances
+            print('inn main.py, valid depth heigphtamp', valid_depth_heightmap.shape)
             grasp_predictions = trainer.forward(
                 color_heightmap, valid_depth_heightmap, is_volatile=True)
             # print("DEBUG: Grasp predictions", grasp_predictions)
@@ -419,7 +412,7 @@ def main(args):
 
             # Compute training labels
             label_value, prev_reward_value = trainer.get_label_value(
-                prev_primitive_action, prev_push_success, prev_grasp_success, change_detected, prev_push_predictions, prev_grasp_predictions, color_heightmap, valid_depth_heightmap)
+                prev_primitive_action, prev_push_success, prev_grasp_success, change_detected, None, prev_grasp_predictions, color_heightmap, valid_depth_heightmap)
             trainer.label_value_log.append([label_value])
             logger.write_to_log('label-value', trainer.label_value_log)
             trainer.reward_value_log.append([prev_reward_value])
@@ -485,9 +478,8 @@ def main(args):
                         np.float32)/100000
 
                     # Compute forward pass with sample
-                    with torch.no_grad():
-                        sample_grasp_predictions = trainer.forward(
-                            sample_color_heightmap, sample_depth_heightmap, is_volatile=True)
+                    sample_push_predictions, sample_grasp_predictions, sample_state_feat = trainer.forward(
+                        sample_color_heightmap, sample_depth_heightmap, is_volatile=True)
 
                     # Load next sample RGB-D heightmap
                     next_sample_color_heightmap = cv2.imread(os.path.join(
@@ -549,7 +541,6 @@ def main(args):
         prev_push_success = nonlocal_variables['push_success']
         prev_grasp_success = nonlocal_variables['grasp_success']
         prev_primitive_action = nonlocal_variables['primitive_action']
-        #prev_push_predictions = push_predictions.copy()
         prev_grasp_predictions = grasp_predictions.copy()
         prev_best_pix_ind = nonlocal_variables['best_pix_ind']
 

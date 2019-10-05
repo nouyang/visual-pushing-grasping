@@ -64,6 +64,10 @@ class reinforcement_net(nn.Module):
         self.output_prob = []
 
     def forward(self, input_color_data, input_depth_data, is_volatile=False, specific_rotation=-1):
+
+        print("input color shape:", input_color_data.size())
+        print("input depth shape:", input_depth_data.size())
+
         # if is_volatile:
         output_prob = []
         interm_feat = []
@@ -129,8 +133,12 @@ class reinforcement_net(nn.Module):
             self.visual_features_with_physics_channel = torch.cat(
                 (self.visual_features, physics_images_t), dim=1)
 
+            print("visual features shape:", self.visual_features.size())
+
             #with torch.no_grad():
             self.grasp_output = self.all_nets.grasp_net(self.visual_features_with_physics_channel)
+
+            print("grasp output shape before rotation:", self.grasp_output.size())
 
             #print(torch.cuda.memory_allocated() / 1000000000, "GB")
 
@@ -152,6 +160,8 @@ class reinforcement_net(nn.Module):
                                             self.grasp_output.data.size())
             self.grasp_output = F.grid_sample(
                 self.grasp_output, flow_grid_after, mode='nearest')
+
+            print("grasp output shape after rotation:", self.grasp_output.size())
 
             output_prob.append(self.grasp_output)
 

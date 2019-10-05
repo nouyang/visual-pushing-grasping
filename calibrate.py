@@ -45,7 +45,7 @@ workspace_limits = np.asarray(  # smaller true-ish (63 pts)
 workspace_limits = np.asarray(
     # [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])
     # [[-0.891, -0.556], [-0.357, 0.131], [-0.340, -0.190]])
-    [[-0.600, -0.300], [-0.250, 0.150], [-0.300, -0.200]])
+    [[-0.850, -0.520], [-0.250, 0.150], [-0.300, -0.200]])
 
 # calib_grid_step = 0.05
 #calib_grid_step = 0.15
@@ -60,15 +60,7 @@ calib_grid_step = 0.15
 checkerboard_offset_from_tool = [-0.0572,
                                  0.000, 0.0185]  # gripper is 2cm high
 
-# Originalj
-# tool_orientation = [-np.pi/2, 0, 0]
 
-# NOTE: Mine is experimentally measured (from TCP pose status)
-# NOTE: Can I provide this in not-axis angle?
-# tool_orientation = [1.19, -1.26, -1.22]
-# tool_orientation = [52.34, 2.40, -2.45]
-tool_orientation = [1.142, -1.31, -1.28]
-# from pendant, this is equivalent to 0, pi/2, pi
 # ---------------------------------------------
 
 
@@ -96,10 +88,12 @@ observed_pts = []
 observed_pix = []
 
 home_in_rad = np.deg2rad(
-    # np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
-    # np.array([-13.5, -25.5, 120.7, -90., 80., 0]))
-    # np.array([0.00, -30.0, 103.0, -72.8, 90.0, 0.0]))
-    np.array([0, -13.48, 88.9, -75.5, 100.9, 0]))
+    np.array([0, -13.48, 88.9, -75.5, 90, 0]))
+
+# TODO
+tool_orientation = [2.352, 2.405, -2.438]
+
+
 # Move robot to home pose
 print('Connecting to robot...')
 robot = Robot(False, False, None, workspace_limits,

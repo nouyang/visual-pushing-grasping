@@ -190,6 +190,8 @@ class Trainer(object):
             input_depth_image.astype(np.float32)).permute(3, 2, 0, 1)
 
         # Pass input data through model
+        print("in trainer.py input depth data:", input_depth_data.shape)
+
         with torch.no_grad():
             output_prob = self.model.forward(
                 input_color_data, input_depth_data, is_volatile, specific_rotation)
@@ -213,18 +215,25 @@ class Trainer(object):
 
             # TODO: check what's going on
 
+            print("padding width in trainer:", padding_width)
+            print("1st output prob shape in trainer:", output_prob[0].shape)
+
             # Return Q values (and remove extra padding)
             for rotate_idx in range(len(output_prob)):
                 if rotate_idx == 0:
                     #push_predictions = output_prob[rotate_idx][0].cpu().data.numpy()[:, 0, int(padding_width/2):int(
                     #    color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[0]/2 - padding_width/2)]
                     grasp_predictions = output_prob[rotate_idx].cpu().data.numpy()[:, 0, int(padding_width/2):int(
-                        color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[0]/2 - padding_width/2)]
+                        color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[1]/2 - padding_width/2)]
                 else:
                     #push_predictions = np.concatenate((push_predictions, output_prob[rotate_idx][0].cpu().data.numpy()[:, 0, int(padding_width/2):int(
                     #    color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[0]/2 - padding_width/2)]), axis=0)
                     grasp_predictions = np.concatenate((grasp_predictions, output_prob[rotate_idx].cpu().data.numpy()[:, 0, int(padding_width/2):int(
-                        color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[0]/2 - padding_width/2)]), axis=0)
+                        color_heightmap_2x.shape[0]/2 - padding_width/2), int(padding_width/2):int(color_heightmap_2x.shape[1]/2 - padding_width/2)]), axis=0)
+
+            print("1st output prob shape in trainer after remove padding:", grasp_predictions.shape)
+
+        print("method", self.method)
 
         #return push_predictions, grasp_predictions
         return grasp_predictions

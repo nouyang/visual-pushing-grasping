@@ -103,7 +103,7 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     depth_heightmap = depth_heightmap - z_bottom
     depth_heightmap[depth_heightmap < 0] = 0
     depth_heightmap[depth_heightmap == -z_bottom] = np.nan
-
+    print('depth heightmap in utils.py', depth_heightmap.shape)
     return color_heightmap, depth_heightmap
 
 # Save a 3D point cloud to a binary .ply file

@@ -39,8 +39,8 @@ class PyUR(object):
         # self.moveto_limits = np.asarray(
         # [[-0.700, -0.350], [-0.125, 0.225], [-0.290, -0.195]])  # grasp pos
 
-        self.A_moveto_limits = workspace_limits
-        print('in urcomm init we have limits', self.A_moveto_limits)
+        self.moveto_limits = workspace_limits
+        print('in urcomm init we have limits', self.moveto_limits)
         # self.moveto_limits = np.asarray(
         # [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])  # for calib
         # Tool pose tolerance for blocking calls (meters)
@@ -206,7 +206,7 @@ class PyUR(object):
             if self.is_robotiq:
                 width = self.secmon.get_all_data()["ToolData"]["analogInput2"]
             else:
-                width = self.secom.get_tool_analog_in(2)
+                width = self.secmon.get_tool_analog_in(2)
             if _log:
                 self.logger.debug(
                     "Received gripper(is robotiq? % s) width from robot: % s" %
@@ -269,11 +269,10 @@ class PyUR(object):
         # position ins meters, orientation is axis-angle
 
         # TODO: Remove this hardcoding
-        moveto_lims = np.asarray(
-            [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
+       # moveto_lims = np.asarray(
+       #     [[-0.700, -0.350], [-0.125, 0.225], [-0.300, -0.000]])  # grasp pos
 
-        print('in move to we have a limits', self.A_moveto_limits)
-        if self._is_safe(position, moveto_lims) or override_safety:
+        if self._is_safe(position, self.moveto_limits) or override_safety:
             prog = "def moveTo():\n"
             # t = 0, r = radius
             if orientation is None:
@@ -290,7 +289,7 @@ class PyUR(object):
             self.send_program(prog)
         else:
             print("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
-                  position, moveto_lims)
+                  position, self.moveto_limits)
             # self.logger.info("NOT Safe. NOT moving to: %s, due to LIMITS: %s",
             # position, self.moveto_limits)
         if wait:
@@ -340,7 +339,7 @@ class PyUR(object):
                     prog += "\tsocket_set_var(\"{}\",{},\"{}\")\n".format("POS", 0,
                                                                           self.socket_name)
                 else:
-                    prog += "\tset_digital_out(8, True)"
+                    prog += "\tset_digital_out(8, False)"
 
             elif a_move["type"] == 'close':
                 if self.is_robotiq:
@@ -348,16 +347,16 @@ class PyUR(object):
                                                                           255,
                                                                           self.socket_name)
                 else:
-                    prog += "\tset_digital_out(8, False)"
+                    prog += "\tset_digital_out(8, True)"
 
             else:
-                if radius not in a_move:
+                if 'radius' not in a_move:
                     a_move['radius'] = 0.01
-                if acc not in a_move:
+                if 'acc' not in a_move:
                     # acc = self.joint_acc
-                    acc = self.joint_acc
-                if vel not in a_move:
-                    vel = self.joint_vel
+                    a_move['acc'] = self.joint_acc
+                if 'vel' not in a_move:
+                    a_move['vel'] = self.joint_vel
                 if idx == (len(moves_list) - 1):
                     radius = 0.001
                     # acc = self.joint_acc
