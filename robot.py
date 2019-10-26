@@ -146,7 +146,7 @@ class Robot(object):
                         'acc': self.joint_acc, 'vel': self.joint_vel, 'rad': 0.00}
 
                 print(above['pose'])
-                self.r.combo_move([above, home], wait=False)
+                self.r.combo_move([above, home], wait=True)
                 print("!--reached home--")
                 # self.r.move_to(home_position, tool_orientation, radius=blend_radius,
                 # wait=True)
