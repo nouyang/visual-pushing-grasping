@@ -12,10 +12,10 @@ import struct
 # User options (change me)
 # --------------- Setup options ---------------
 # tcp_host_ip = '100.127.7.223' # IP and port to robot arm as TCP client (UR5)
-tcp_host_ip = "10.75.15.91"
+tcp_host_ip = "10.75.15.199"
 tcp_port = 30002
 # rtc_host_ip = '100.127.7.223' # IP and port to robot arm as real-time client (UR5)
-rtc_host_ip = "10.75.15.91"
+rtc_host_ip = "10.75.15.199"
 rtc_port = 30003
 
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)

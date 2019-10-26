@@ -1,6 +1,6 @@
 # Echo client program
 import socket
-HOST = "10.75.15.94"    # The remote host
+HOST = "10.75.15.199"    # The remote host
 PORT = 30002              # The same port as used by the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))

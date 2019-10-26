@@ -121,42 +121,54 @@ class Robot(object):
                               wait=True)
 
             # NOTE: HARDCODED
-            home_position = [-0.440, -0.220, -0.340]
 
-            #prepick_position = [0, 0, 0]
-            #pretoss_position = [0, 0, 0]
+            # prepick_position = [0, 0, 0]
+            # pretoss_position = [0, 0, 0]
 
             gripper_width = self.r.get_state('gripper_width')
-            print('gripper_width', gripper_width)
+            print('!---gripper_width', gripper_width)
             # NOTE: HARDCODED
             gripper_open = gripper_width > 0.26
 
             if gripper_open:
                 # We've grasped something. Move to pretoss position
                 # blend in nice arc b/tw current pos and pretoss pos
-                blend_radius = min(0.02,
-                                   abs(home_position[1] - position[1])/2 - 0.01)
+                # blend_radius = min(0.02,
+                                   # abs(home_position[1] - position[1])/2 - 0.01)
 
-                position[2] = home_position[2]  # pretoss_position[2]
+                # position[2] = home_position[2]  # pretoss_position[2]
+                # position[2] = home_position[2]  # pretoss_position[2]
 
-                self.r.move_to(position, tool_orientation, radius=blend_radius)
+                print("!----- grasped object, going home now ---")
+                home_position = [-0.440, -0.220, -0.200]
+
+                home = {'type': 'p', 'pose': np.append(home_position, tool_orientation),
+                        'acc': self.joint_acc, 'vel': self.joint_vel, 'rad': 0.00}
+
+                print(above['pose'])
+                self.r.combo_move([above, home], wait=False)
+                print("!--reached home--")
+                # self.r.move_to(home_position, tool_orientation, radius=blend_radius,
+                # wait=True)
 
                 # Check if grip has slipped (width has changed). If not, success
                 # TODO: this relies on gripper continuing to try to close
                 if np.abs(self.r.get_state('gripper_width') - gripper_width) < 0.1:
                     grasp_success = True
                 else:
+                    print("!----- failed to grasp object ---")
                     # failed to keep object in grasp, move up & to home to
                     # prepare to try again
                     position[2] += 0.1
                     self.r.move_to(position, tool_orientation,
-                                   acc=self.joint_acc * 0.5,
-                                   vel=self.joint_vel * 0.5,
+                                   acc=self.joint_acc,
+                                   vel=self.joint_vel,
                                    radius=0.09)
-                    self.r.move_to(home_position, tool_orientation,
-                                   acc=self.joint_acc * 0.5,
-                                   vel=self.joint_vel * 0.5,
-                                   radius=0.0)
+                    self.r.combo_move([home], wait=True)
+                    # self.r.move_to(home_position, tool_orientation,
+                    # acc=self.joint_acc * 0.5,
+                    # vel=self.joint_vel * 0.5,
+                    # radius=0.0)
                     grasp_success = False
                 return grasp_success
 
