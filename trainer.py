@@ -143,6 +143,7 @@ class Trainer(object):
         diag_length = float(color_heightmap_2x.shape[0]) * np.sqrt(2)
         diag_length = np.ceil(diag_length/32)*32
         padding_width = int((diag_length - color_heightmap_2x.shape[0])/2)
+
         color_heightmap_2x_r = np.pad(
             color_heightmap_2x[:, :, 0], padding_width, 'constant', constant_values=0)
         color_heightmap_2x_r.shape = (
@@ -272,10 +273,9 @@ class Trainer(object):
             if not change_detected and not grasp_success:
                 future_reward = 0
             else:
-                next_push_predictions, next_grasp_predictions, next_state_feat = self.forward(
+                next_grasp_predictions = self.forward(
                     next_color_heightmap, next_depth_heightmap, is_volatile=True)
-                future_reward = max(
-                    np.max(next_push_predictions), np.max(next_grasp_predictions))
+                future_reward = np.max(next_grasp_predictions)
 
                 # # Experiment: use Q differences
                 # push_predictions_difference = next_push_predictions - prev_push_predictions
@@ -409,14 +409,13 @@ class Trainer(object):
             elif primitive_action == 'grasp':
 
                 # Do forward pass with specified rotation (to save gradients)
-                push_predictions, grasp_predictions, state_feat = self.forward(
-                    color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=best_pix_ind[0])
+                self.forward(color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=best_pix_ind[0])
 
                 if self.use_cuda:
-                    loss = self.criterion(self.model.output_prob[0][1].view(1, 320, 320), Variable(torch.from_numpy(
+                    loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
                         label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=False)
                 else:
-                    loss = self.criterion(self.model.output_prob[0][1].view(1, 320, 320), Variable(torch.from_numpy(
+                    loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
                         label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=False)
                 loss = loss.sum()
                 loss.backward()
@@ -429,10 +428,10 @@ class Trainer(object):
                     color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=opposite_rotate_idx)
 
                 if self.use_cuda:
-                    loss = self.criterion(self.model.output_prob[0][1].view(1, 320, 320), Variable(torch.from_numpy(
+                    loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
                         label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=False)
                 else:
-                    loss = self.criterion(self.model.output_prob[0][1].view(1, 320, 320), Variable(torch.from_numpy(
+                    loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
                         label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=False)
 
                 loss = loss.sum()

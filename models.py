@@ -69,7 +69,7 @@ class reinforcement_net(nn.Module):
         print("input depth shape:", input_depth_data.size())
 
         # if is_volatile:
-        output_prob = []
+        self.output_prob = []
         interm_feat = []
         physics_prediction = [1.0] * input_color_data.shape[0]
 
@@ -113,11 +113,10 @@ class reinforcement_net(nn.Module):
 
             visual_input = torch.cat((rotate_color, rotate_depth), dim=1)  # NOTE: maybe 3?
 
-            #with torch.no_grad():
-            self.visual_features = self.all_nets.perception_net(visual_input.to(self.device))
+            visual_features = self.all_nets.perception_net(visual_input.to(self.device))
 
             physics_prediction_image_shape = (
-                self.visual_features.shape[0], 1, self.visual_features.shape[2], self.visual_features.shape[3]
+                visual_features.shape[0], 1, visual_features.shape[2], visual_features.shape[3]
             )
 
             # Fill physics 'image' with same value (prediction) & concat to
@@ -130,15 +129,15 @@ class reinforcement_net(nn.Module):
                 physics_prediction[:, np.newaxis, np.newaxis, np.newaxis]
             physics_images_t = torch.from_numpy(physics_images).to(self.device)
 
-            self.visual_features_with_physics_channel = torch.cat(
-                (self.visual_features, physics_images_t), dim=1)
+            visual_features_with_physics_channel = torch.cat(
+                (visual_features, physics_images_t), dim=1)
 
-            print("visual features shape:", self.visual_features.size())
+            print("visual features shape:", visual_features.size())
 
             #with torch.no_grad():
-            self.grasp_output = self.all_nets.grasp_net(self.visual_features_with_physics_channel)
+            grasp_output = self.all_nets.grasp_net(visual_features_with_physics_channel)
 
-            print("grasp output shape before rotation:", self.grasp_output.size())
+            print("grasp output shape before rotation:", grasp_output.size())
 
             #print(torch.cuda.memory_allocated() / 1000000000, "GB")
 
@@ -157,14 +156,14 @@ class reinforcement_net(nn.Module):
 
             flow_grid_after = F.affine_grid(Variable(affine_mat_after,
                                                      requires_grad=False).to(self.device),
-                                            self.grasp_output.data.size())
-            self.grasp_output = F.grid_sample(
-                self.grasp_output, flow_grid_after, mode='nearest')
+                                            grasp_output.data.size())
+            grasp_output = F.grid_sample(
+                grasp_output, flow_grid_after, mode='nearest')
 
-            print("grasp output shape after rotation:", self.grasp_output.size())
+            print("grasp output shape after rotation:", grasp_output.size())
 
-            output_prob.append(self.grasp_output)
+            self.output_prob.append(grasp_output)
 
-        return output_prob
+        return self.output_prob
         # return self.visual_features, self.visual_features_with_physics_channel
         # return output_prob#, interm_feat
