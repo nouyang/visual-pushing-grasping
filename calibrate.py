@@ -17,10 +17,10 @@ logging.basicConfig(level=logging.INFO)
 # User options (change me)
 # --------------- Setup options ---------------
 # tcp_host_ip = '100.127.7.223' # IP and port to robot arm as TCP client (UR5)
-tcp_host_ip = "10.75.15.91"
+tcp_host_ip = "10.75.15.199"
 tcp_port = 30002
 # rtc_host_ip = '100.127.7.223' # IP and port to robot arm as real-time client (UR5)
-rtc_host_ip = "10.75.15.91"
+rtc_host_ip = "10.75.15.199"
 rtc_port = 30003
 
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
@@ -45,7 +45,9 @@ workspace_limits = np.asarray(  # smaller true-ish (63 pts)
 workspace_limits = np.asarray(
     # [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])
     # [[-0.891, -0.556], [-0.357, 0.131], [-0.340, -0.190]])
-    [[-0.850, -0.520], [-0.250, 0.150], [-0.300, -0.200]])
+    # [[-0.850, -0.520], [-0.250, 0.150], [-0.400, -0.350]])
+    [[-0.800, -0.550], [-0.250, 0.150], [-0.240, -0.090]])
+# [[-0.750, -0.500], [-0.250, 0.150], [-0.300, -0.150]])
 
 # calib_grid_step = 0.05
 #calib_grid_step = 0.15
@@ -88,10 +90,12 @@ observed_pts = []
 observed_pix = []
 
 home_in_rad = np.deg2rad(
-    np.array([0, -13.48, 88.9, -75.5, 90, 0]))
+    # np.array([0, -13.48, 88.9, -75.5, 90, 0]))
+    np.array([0, -13.48, 88.9, -255.5, 275, 180]))
 
 # TODO
-tool_orientation = [2.352, 2.405, -2.438]
+# tool_orientation = [2.352, 2.405, -2.438]
+tool_orientation = [2.339, 2.396, -2.480]
 
 
 # Move robot to home pose

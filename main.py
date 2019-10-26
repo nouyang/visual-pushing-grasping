@@ -15,10 +15,12 @@ from torch.autograd import Variable
 from mock_robot import MockRobot
 from trainer import Trainer
 from logger import Logger
+import logging
 import utils
 
 
 def main(args):
+    logging.basicConfig(level=logging.WARNING)
 
     # --------------- Setup options ---------------
     is_sim = args.is_sim  # Run in simulation?
@@ -46,7 +48,9 @@ def main(args):
         # NOTE: 5 Oct 2019
         workspace_limits = np.asarray(
             #        [[-0.600, -0.300], [-0.250, 0.150], [-0.300, -0.200]])
-            [[-0.850, -0.520], [-0.250, 0.150], [-0.480, -0.200]])
+            # [[-0.850, -0.520], [-0.250, 0.150], [-0.480, -0.200]])
+            # [[-0.850, -0.520], [-0.250, 0.150], [-0.320, -0.150]])
+            [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
     heightmap_resolution = 0.00115
@@ -134,6 +138,7 @@ def main(args):
 
     def process_actions():
         while True:
+            #print('!-- Running process actions loop')
             if nonlocal_variables['executing_action']:
 
                 # Determine whether grasping or pushing should be executed based on network predictions
@@ -169,7 +174,8 @@ def main(args):
                 if nonlocal_variables['primitive_action'] != 'grasp':
                     raise ValueError("Pushing not used in this project.")
 
-                print("valid depth heightmap size:", valid_depth_heightmap.shape)
+                print("valid depth heightmap size:",
+                      valid_depth_heightmap.shape)
 
                 # If heuristic bootstrapping is enabled: if change has not been detected more than 2 times, execute heuristic algorithm to detect grasps/pushes
                 # NOTE: typically not necessary and can reduce final performance.
@@ -197,10 +203,12 @@ def main(args):
                         nonlocal_variables['best_pix_ind'] = np.unravel_index(
                             np.argmax(push_predictions), push_predictions.shape)
                         predicted_value = np.max(push_predictions)
+
                     elif nonlocal_variables['primitive_action'] == 'grasp':
                         nonlocal_variables['best_pix_ind'] = np.unravel_index(
                             np.argmax(grasp_predictions), grasp_predictions.shape)
                         predicted_value = np.max(grasp_predictions)
+
                 trainer.use_heuristic_log.append([1 if use_heuristic else 0])
                 logger.write_to_log('use-heuristic', trainer.use_heuristic_log)
 
@@ -294,12 +302,14 @@ def main(args):
                     print('Push successful: %r' %
                           (nonlocal_variables['push_success']))
                 elif nonlocal_variables['primitive_action'] == 'grasp':
+                    # ! TODO
                     nonlocal_variables['grasp_success'] = robot.grasp(
                         primitive_position, best_rotation_angle, workspace_limits)
                     print('Grasp successful: %r' %
                           (nonlocal_variables['grasp_success']))
 
                 nonlocal_variables['executing_action'] = False
+                print('!-- no longer executing action')
             time.sleep(0.01)
 
     action_thread = threading.Thread(target=process_actions)
@@ -388,7 +398,8 @@ def main(args):
 
             # TODO: edit
             # Run forward pass with network to get affordances
-            print('inn main.py, valid depth heigphtamp', valid_depth_heightmap.shape)
+            print('inn main.py, valid depth heigphtamp',
+                  valid_depth_heightmap.shape)
             grasp_predictions = trainer.forward(
                 color_heightmap, valid_depth_heightmap, is_volatile=True)
             # print("DEBUG: Grasp predictions", grasp_predictions)

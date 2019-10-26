@@ -1,6 +1,6 @@
 import socket
 import time
-HOST = "10.75.15.91"    # The remote host
+HOST = "10.75.15.199"    # The remote host
 PORT = 30002              # The same port as used by the server
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,10 +13,7 @@ print("Starting Program")
 
 
 # f = open("./rg2_new.script", "rb")
-f = open("./tmp/olmia.script", "rb")
-# f = open("./tmp/rg2test.script", "rb")
-f = open("./tmp/test_simple_rg2.script", "rb")
-
+f = open("olmia.script", "rb")
 # f = open ("setzero.script", "rb")  #Robotiq FT sensor
 
 l = f.read(1024)
