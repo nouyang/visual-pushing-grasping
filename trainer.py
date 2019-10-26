@@ -411,34 +411,35 @@ class Trainer(object):
                 # Do forward pass with specified rotation (to save gradients)
                 self.forward(color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=best_pix_ind[0])
 
+                # TODO: requires_grad=False before, why?
                 if self.use_cuda:
                     loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
-                        label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=False)
+                        label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=True)
                 else:
                     loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
-                        label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=False)
+                        label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=True)
                 loss = loss.sum()
                 loss.backward()
-                loss_value = loss.cpu().data.numpy()[0]
+                loss_value = loss.cpu().data.numpy()
 
                 opposite_rotate_idx = (
                     best_pix_ind[0] + self.model.num_rotations/2) % self.model.num_rotations
 
-                push_predictions, grasp_predictions, state_feat = self.forward(
-                    color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=opposite_rotate_idx)
+                self.forward(color_heightmap, depth_heightmap, is_volatile=False, specific_rotation=opposite_rotate_idx)
 
+                # TODO: requires_grad=False before, why?
                 if self.use_cuda:
                     loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
-                        label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=False)
+                        label).float().cuda())) * Variable(torch.from_numpy(label_weights).float().cuda(), requires_grad=True)
                 else:
                     loss = self.criterion(self.model.output_prob[0].view(1, 320, 320), Variable(torch.from_numpy(
-                        label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=False)
+                        label).float())) * Variable(torch.from_numpy(label_weights).float(), requires_grad=True)
 
                 loss = loss.sum()
                 loss.backward()
-                loss_value = loss.cpu().data.numpy()[0]
+                loss_value = loss.cpu().data.numpy()
 
-                loss_value = loss_value/2
+                loss_value = loss_value / 2
 
             print('Training loss: %f' % (loss_value))
             self.optimizer.step()
