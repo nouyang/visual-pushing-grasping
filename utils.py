@@ -358,3 +358,15 @@ class CrossEntropyLoss2d(nn.Module):
 
     def forward(self, inputs, targets):
         return self.nll_loss(F.log_softmax(inputs, dim=1), targets)
+
+
+def detect_changes(depth_heightmap, prev_depth_heightmap):
+    depth_diff = abs(depth_heightmap - prev_depth_heightmap)
+    depth_diff[np.isnan(depth_diff)] = 0
+    depth_diff[depth_diff > 0.3] = 0
+    depth_diff[depth_diff < 0.01] = 0
+    depth_diff[depth_diff > 0] = 1
+    change_threshold = 300
+    change_value = np.sum(depth_diff)
+    change_detected = change_value > change_threshold
+    return change_detected, change_value
