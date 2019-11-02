@@ -12,13 +12,13 @@ import cv2
 from collections import namedtuple
 import torch
 from torch.autograd import Variable
-from robot import Robot
 from trainer import Trainer
 from logger import Logger
 import logging
 import utils
 import constants
 import runner
+import mock_robot
 
 
 def main(args):
@@ -95,10 +95,14 @@ def main(args):
     home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 181.4])
 
     # Initialize pick-and-place system (camera and robot)
-    robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
-                  tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-                  is_testing, test_preset_cases, test_preset_file,
-                  home_joint_config=home_rad)
+    if is_mock:
+        robot = mock_robot.MockRobot()
+    else:
+        from robot import Robot
+        robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
+                      tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
+                      is_testing, test_preset_cases, test_preset_file,
+                      home_joint_config=home_rad)
 
     # Initialize trainer
     trainer = Trainer(method, push_rewards, future_reward_discount,
@@ -107,8 +111,8 @@ def main(args):
     # Initialize data logger
     logger = Logger(continue_logging, logging_directory)
     # Save camera intrinsics and pose
-    logger.save_camera_info(robot.cam_intrinsics,
-                            robot.cam_pose, robot.cam_depth_scale)
+    if not is_mock:
+        logger.save_camera_info(robot.cam_intrinsics, robot.cam_pose, robot.cam_depth_scale)
     # Save heightmap parameters
     logger.save_heightmap_info(workspace_limits, heightmap_resolution)
 
@@ -308,6 +312,7 @@ if __name__ == '__main__':
     # --------------- Setup options ---------------
     parser.add_argument('--is_sim', dest='is_sim', action='store_true',
                         default=False,                                    help='run in simulation?')
+    parser.add_argument('--is_mock', dest='is_mock', action='store_true', default=False)
     parser.add_argument('--obj_mesh_dir', dest='obj_mesh_dir', action='store', default='objects/blocks',
                         help='directory containing 3D mesh files (.obj) of objects to be added to simulation')
     parser.add_argument('--num_obj', dest='num_obj', type=int, action='store', default=5,
