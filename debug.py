@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 # User options (change me)
 # --------------- Setup options ---------------
-tcp_host_ip = "10.75.15.91"  # IP and port to robot arm as TCP client (UR5)
+tcp_host_ip = "10.75.15.199"  # IP and port to robot arm as TCP client (UR5)
 tcp_port = 30002
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
 # NOTE: original

@@ -2,7 +2,7 @@ import sys
 import urx
 from urx.robotiq_two_finger_gripper import Robotiq_Two_Finger_Gripper
 
-tcp_host_ip = "10.75.15.91"
+tcp_host_ip = "10.75.15.199"
 if __name__ == '__main__':
     rob = urx.Robot(tcp_host_ip)
     # robotiqgrip = Robotiq_Two_Finger_Gripper(socket_host="/dev/ttyUSB0")

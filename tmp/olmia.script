@@ -1,29 +1,30 @@
 # input data
 def olmia():
-    force0 = 5
-    width0 = 0
-    force1 = 5
-    width1 = 1100
-    force2 = 40
-    width2 = 0
-    force3 = 40
-    width3 = 1100
-    # Turn off supply voltage
+    #force0 = 5
+    #width0 = 0
+    #force1 = 5
+    #width1 = 1100
+    #force2 = 40
+    #width2 = 0
+    #force3 = 40
+    #width3 = 1100
+    ## Turn off supply voltage
     set_tool_voltage(0)
-    # Wait for discharge
+    ## Wait for discharge
     sleep(1.0)
-    # popup("hi4")
+     #popup("hi4")
+    # Turn on supply voltage
+
     set_digital_out(8, False)
     set_digital_out(9, False)
-    # Turn on supply voltage
     set_tool_voltage(24)
-    # Wait for RG2 ready
+    ## Wait for RG2 ready
     timeout = 0
     while get_digital_in(9) == False:
         timeout = timeout+1
         # sleep(0.008)
         sleep(0.005)
-        if timeout > 800:
+        if timeout > 100:
             # wait at most 5 secs
             textmsg("breaking")
             break
@@ -32,13 +33,19 @@ def olmia():
 
     count = 0
     textmsg("beginning loop")
+    #set_digital_out(8, True)
     set_digital_out(9, False)
+    sleep(0.1)
     while True:
-    textmsg(count)
-    set_digital_out(8, True)
-    sleep(1)
-    set_digital_out(8, False)
-    sleep(1)
+        textmsg("count")
+        textmsg(count)
+    #textmsg(count)
+        set_digital_out(8, True)
+        #set_digital_out(9, False)
+        sleep(0.5)
+        #set_digital_out(9, True)
+        set_digital_out(8, False)
+        sleep(0.5)
     count = count + 1
     end
 end

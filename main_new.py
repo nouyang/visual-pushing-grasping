@@ -19,7 +19,7 @@ import utils
 
 def main(args):
 
-    tcp_host_ip = "10.75.15.91"  # IP and port to robot arm as TCP client (UR5)
+    tcp_host_ip = "10.75.15.199"  # IP and port to robot arm as TCP client (UR5)
     tcp_port = 30002
 
     workspace_limits = np.asarray(
