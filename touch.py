@@ -15,24 +15,34 @@ tcp_port = 30002
 rtc_host_ip = "10.75.15.199"  # IP and port to robot arm as TCP client (UR5)
 rtc_port = 30001
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
+# tool_orientation = [-1.22, 1.19, -1.17]  # gripper facing upward, for calib
+# tool_orientation = [2.339, 2.396, -2.480]
+tool_orientation = [2.24, 2.30, -0.00]
+
 workspace_limits = np.asarray(
     [[0.400, 0.600], [-0.250, 0.150], [0.195, 0.460]])
-# tool_orientation = [-1.22, 1.19, -1.17]  # gripper facing upward, for calib
-tool_orientation = None
 
-
-workspace_limits = np.asarray(
-    [[-0.710, -0.360], [-0.115, 0.235], [-0.400, -0.310]])  # with gripper horizontal
-
-home_in_rad = np.deg2rad(
-    # np.array([-61.25, -20.31, 113.11, -94.17, -335.09, -1.1]))
-    np.array([-13.5, -25.5, 120.7, -90., 80., 0]))
-# Move robot to home pose
+home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 181.4])
 
 # Move robot to home pose
-robot = Robot(False, None, None, workspace_limits,
+is_sim = False
+obj_mesh_dir = None
+num_obj = None
+
+tcp_host_ip = '10.75.15.199'
+tcp_port = 30002
+
+rtc_host_ip = '10.75.15.199'
+rtc_port = 30004
+
+is_testing = False
+test_preset_cases = None
+test_preset_file = None
+
+robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
               tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
-              False, None, None, home_joint_config=home_in_rad)
+              is_testing, test_preset_cases, test_preset_file,
+              home_joint_config=home_rad)
 robot.r.open_gripper()
 
 # Slow down robot
@@ -70,8 +80,9 @@ def mouseclick_callback(event, x, y, flags, param):
 
         target_position = target_position[0:3, 0]
         print('Moving to ', target_position, ' with z offset of 0.200')
-        target_position[2] += 0.200
-        robot.r.move_to(target_position, tool_orientation)
+        target_position[2] += 0.100
+        robot.r.move_to(target_position, tool_orientation,
+                        override_safety=True)
 
 
 # Show color and depth frames

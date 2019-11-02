@@ -104,6 +104,10 @@ class Robot(object):
             tilted_tool_orientation = tilted_tool_orientation_axis_angle[0]*np.asarray(
                 tilted_tool_orientation_axis_angle[1:4])
 
+            if tool_orientation_angle > np.pi:
+                print('SAFETYING tool orientation angle (> pi)- subtract 2 pi')
+                tool_orientation_angle = tool_orientation_angle - 2*np.pi
+
             position = np.asarray(position).copy()
             # Ensure z safety
             position[2] = max(position[2] - 0.05, workspace_limits[2][0])
@@ -115,10 +119,12 @@ class Robot(object):
             position[2] -= 0.05
             down = {'type': 'p', 'pose': np.append(position, tool_orientation),
                     'acc': self.joint_acc * 0.1, 'vel': self.joint_vel * 0.1, 'rad': 0.00}
+
             # Block until robot reaches target tool position and gripper fingers have stopped moving
             self.r.combo_move([{'type': 'open'}, above, down, {'type': 'close'},
                                down],
                               wait=True)
+            print('combo move got to object down position', down)
 
             # NOTE: HARDCODED
 
@@ -130,6 +136,7 @@ class Robot(object):
             # NOTE: HARDCODED
             gripper_open = gripper_width > 0.26
 
+            grasp_success = False
             if gripper_open:
                 # We've grasped something. Move to pretoss position
                 # blend in nice arc b/tw current pos and pretoss pos
@@ -140,37 +147,41 @@ class Robot(object):
                 # position[2] = home_position[2]  # pretoss_position[2]
 
                 print("!----- grasped object, going home now ---")
-                home_position = [-0.440, -0.220, -0.200]
+                # home_position = [-0.440, -0.170, -0.200]
+                home_position = [-0.445, -0.238, -0.300]
 
                 home = {'type': 'p', 'pose': np.append(home_position, tool_orientation),
                         'acc': self.joint_acc, 'vel': self.joint_vel, 'rad': 0.00}
 
-                print(above['pose'])
-                self.r.combo_move([above, home], wait=True)
+                # self.r.combo_move([home], wait=True) #TODO: why does this
+                # fail?
+                self.r.move_to(home_position, tool_orientation,
+                               override_safety=True)
                 print("!--reached home--")
                 # self.r.move_to(home_position, tool_orientation, radius=blend_radius,
                 # wait=True)
 
                 # Check if grip has slipped (width has changed). If not, success
                 # TODO: this relies on gripper continuing to try to close
+                print('measured gripper width',
+                      self.r.get_state('gripper_width'))
                 if np.abs(self.r.get_state('gripper_width') - gripper_width) < 0.1:
                     grasp_success = True
-                else:
-                    print("!----- failed to grasp object ---")
-                    # failed to keep object in grasp, move up & to home to
-                    # prepare to try again
-                    position[2] += 0.1
-                    self.r.move_to(position, tool_orientation,
-                                   acc=self.joint_acc,
-                                   vel=self.joint_vel,
-                                   radius=0.09)
-                    self.r.combo_move([home], wait=True)
-                    # self.r.move_to(home_position, tool_orientation,
-                    # acc=self.joint_acc * 0.5,
-                    # vel=self.joint_vel * 0.5,
-                    # radius=0.0)
-                    grasp_success = False
-                return grasp_success
+            else:
+                print("!----- failed to grasp object ---")
+                # failed to keep object in grasp, move up & to home to
+                # prepare to try again
+                position[2] += 0.1
+                self.r.move_to(position, tool_orientation,
+                               acc=self.joint_acc,
+                               vel=self.joint_vel,
+                               radius=0.09)
+                self.r.combo_move([home], wait=True)
+                # self.r.move_to(home_position, tool_orientation,
+                # acc=self.joint_acc * 0.5,
+                # vel=self.joint_vel * 0.5,
+                # radius=0.0)
+            return grasp_success
 
     def throw(self, position, heightmap_rotation_angle, workspace_limits):
         print('Executing: throw at (%f, %f, %f)' %
@@ -249,40 +260,39 @@ class Robot(object):
         print('done with toss')
         # self.send_program(prog, is_sim=is_sim)
 
+    def restart_real(self):
 
-def restart_real(self):
+        print('DEBUG: restarting real')
 
-    print('DEBUG: restarting real')
+        # # Compute tool orientation from heightmap rotation angle
+        # grasp_orientation = [1.0, 0.0]
+        # tool_rotation_angle = -np.pi/4
+        # tool_orientation = np.asarray([grasp_orientation[0]*np.cos(tool_rotation_angle) - grasp_orientation[1]*np.sin(
+        # tool_rotation_angle), grasp_orientation[0]*np.sin(tool_rotation_angle) + grasp_orientation[1]*np.cos(tool_rotation_angle), 0.0])*np.pi
+        # tool_orientation_angle = np.linalg.norm(tool_orientation)
+        # tool_orientation_axis = tool_orientation/tool_orientation_angle
+        # tool_orientation_rotm = utils.angle2rotm(
+        # tool_orientation_angle, tool_orientation_axis, point=None)[:3, :3]
 
-    # Compute tool orientation from heightmap rotation angle
-    grasp_orientation = [1.0, 0.0]
-    tool_rotation_angle = -np.pi/4
-    tool_orientation = np.asarray([grasp_orientation[0]*np.cos(tool_rotation_angle) - grasp_orientation[1]*np.sin(
-        tool_rotation_angle), grasp_orientation[0]*np.sin(tool_rotation_angle) + grasp_orientation[1]*np.cos(tool_rotation_angle), 0.0])*np.pi
-    tool_orientation_angle = np.linalg.norm(tool_orientation)
-    tool_orientation_axis = tool_orientation/tool_orientation_angle
-    tool_orientation_rotm = utils.angle2rotm(
-        tool_orientation_angle, tool_orientation_axis, point=None)[:3, :3]
+        # tilt_rotm = utils.euler2rotm(np.asarray([-np.pi/4, 0, 0]))
+        # tilted_tool_orientation_rotm = np.dot(tilt_rotm, tool_orientation_rotm)
+        # tilted_tool_orientation_axis_angle = utils.rotm2angle(
+        # tilted_tool_orientation_rotm)
+        # tilted_tool_orientation = tilted_tool_orientation_axis_angle[0]*np.asarray(
+        # tilted_tool_orientation_axis_angle[1:4])
 
-    tilt_rotm = utils.euler2rotm(np.asarray([-np.pi/4, 0, 0]))
-    tilted_tool_orientation_rotm = np.dot(tilt_rotm, tool_orientation_rotm)
-    tilted_tool_orientation_axis_angle = utils.rotm2angle(
-        tilted_tool_orientation_rotm)
-    tilted_tool_orientation = tilted_tool_orientation_axis_angle[0]*np.asarray(
-        tilted_tool_orientation_axis_angle[1:4])
+        # # Move to box grabbing position
+        # box_grab_position = [0.5, -0.35, -0.12]
+        # tcp_command = "def process():\n"
+        # tcp_command += " set_digital_out(8,False)\n"
+        # tcp_command += " set_digital_out(8,True)\n"
+        # tcp_command += "end\n"
+        # self.tcp_socket.send(str.encode(tcp_command))
+        # self.tcp_socket.close()
 
-    # Move to box grabbing position
-    box_grab_position = [0.5, -0.35, -0.12]
-    tcp_command = "def process():\n"
-    tcp_command += " set_digital_out(8,False)\n"
-    tcp_command += " set_digital_out(8,True)\n"
-    tcp_command += "end\n"
-    self.tcp_socket.send(str.encode(tcp_command))
-    self.tcp_socket.close()
-
-    # Move to box release position
-    box_release_position = [0.5, 0.08, -0.12]  # TODO
-    home_position = [0.49, 0.11, 0.03]
-    # Block until robot reaches home position
-    state_data = self.get_state()
-    tool_analog_input2 = self.parse_tcp_state_data(state_data, 'tool_data')
+        # # Move to box release position
+        # box_release_position = [0.5, 0.08, -0.12]  # TODO
+        # home_position = [0.49, 0.11, 0.03]
+        # # Block until robot reaches home position
+        # state_data = self.get_state()
+        # tool_analog_input2 = self.parse_tcp_state_data(state_data, 'tool_data')

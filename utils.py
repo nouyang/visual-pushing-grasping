@@ -46,7 +46,7 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     # height) above actual table for gripper to not hit the table
     # otherwsie depth_hieghtmap is blank
     heightmap_limits = workspace_limits.copy()
-    heightmap_limits[2][0] = -0.430
+    heightmap_limits[2][0] = -0.470
     heightmap_limits[2][1] = -0.310
     print(' for get_heightmap, lowered workspace limits', heightmap_limits)
     print(' for heighmap reso', heightmap_resolution)
@@ -57,8 +57,9 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     # color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
     # depth_img = cv2.resize(depth_img, (0, 0), fx=k, fy=k)
     # heightmap_resolution = 0.0022*(1./k)
+
     # Compute heightmap size
-    # TODO: why need ceil?
+    # TODO: why need ceil? (changed from orig code which used round)
     heightmap_size = np.ceil(((heightmap_limits[1][1] - heightmap_limits[1][0])/heightmap_resolution,
                               (heightmap_limits[0][1] - heightmap_limits[0][0])/heightmap_resolution)).astype(int)
 
@@ -89,21 +90,39 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     color_heightmap_b = np.zeros(
         (heightmap_size[0], heightmap_size[1], 1), dtype=np.uint8)
     depth_heightmap = np.zeros(heightmap_size)
+
     heightmap_pix_x = np.floor(
         (surface_pts[:, 0] - heightmap_limits[0][0])/heightmap_resolution).astype(int)
     heightmap_pix_y = np.floor(
         (surface_pts[:, 1] - heightmap_limits[1][0])/heightmap_resolution).astype(int)
+
     color_heightmap_r[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [0]]
     color_heightmap_g[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [1]]
     color_heightmap_b[heightmap_pix_y, heightmap_pix_x] = color_pts[:, [2]]
     color_heightmap = np.concatenate(
         (color_heightmap_r, color_heightmap_g, color_heightmap_b), axis=2)
     depth_heightmap[heightmap_pix_y, heightmap_pix_x] = surface_pts[:, 2]
+
     z_bottom = heightmap_limits[2][0]
     depth_heightmap = depth_heightmap - z_bottom
     depth_heightmap[depth_heightmap < 0] = 0
     depth_heightmap[depth_heightmap == -z_bottom] = np.nan
+
     print('depth heightmap in utils.py', depth_heightmap.shape)
+
+    color_heightmap = color_heightmap[50:-50]
+    depth_heightmap = depth_heightmap[50:-50]
+
+    color_heightmap = cv2.resize(color_heightmap, (112, 112))
+    depth_heightmap = cv2.resize(depth_heightmap, (112, 112))
+
+    # k = 0.64  # 0.64
+    # # Scale image, to change heightmap resolution, so resultant image is 224x224
+    # color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
+
+    print('heightmap hack reshap in utils', color_heightmap.shape)
+    print('heightmap hack reshap in utils', depth_heightmap.shape)
+
     return color_heightmap, depth_heightmap
 
 # Save a 3D point cloud to a binary .ply file

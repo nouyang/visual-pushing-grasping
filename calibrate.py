@@ -58,9 +58,7 @@ calib_grid_step = 0.15
 # checkerboard_offset_from_tool = [0, -0.13, 0.02] # ORIGINAL
 
 # NOTE: measured
-# checkerboard_offset_from_tool = [-0.090, 0.000, 0.020]  # gripper is 2cm high
-checkerboard_offset_from_tool = [-0.0572,
-                                 0.000, 0.0185]  # gripper is 2cm high
+checkerboard_offset_from_tool = [-0.0572, 0.000, 0.0185]
 
 
 # ---------------------------------------------
@@ -91,7 +89,7 @@ observed_pix = []
 
 home_in_rad = np.deg2rad(
     # np.array([0, -13.48, 88.9, -75.5, 90, 0]))
-    np.array([0, -13.48, 88.9, -255.5, 275, 180]))
+    np.array([0, -13.48, 88.9, -255, -90, 180]))
 
 # TODO
 # tool_orientation = [2.352, 2.405, -2.438]
@@ -227,9 +225,7 @@ def get_rigid_transform_error(z_scale):
 
     # NOTE: Camera intrinsics supplied by realsense camera over TCP
     # Apply z offset and compute new observed points using camera intrinsics
-    print(observed_pts)
     observed_z = observed_pts[:, 2:] * z_scale
-    print(observed_pts)
     observed_x = np.multiply(observed_pix[:, [
                              0]]-robot.cam_intrinsics[0][2], observed_z/robot.cam_intrinsics[0][0])
     observed_y = np.multiply(observed_pix[:, [
@@ -237,7 +233,6 @@ def get_rigid_transform_error(z_scale):
     new_observed_pts = np.concatenate(
         (observed_x, observed_y, observed_z), axis=1)
 
-    # NOTE: ENH why not just use openCV for estimating where camera is in world
     # Estimate rigid transform between measured points and new observed points
     R, t = get_rigid_transform(np.asarray(
         measured_pts), np.asarray(new_observed_pts))
