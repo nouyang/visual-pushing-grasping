@@ -12,8 +12,8 @@ class MockRobot(object):
 
     def get_camera_data(self):
 
-        image = np.random.uniform(0, 1, size=(112, 112, 3))
-        depth = np.random.uniform(0, 1, size=(112, 112))
+        image = np.random.uniform(0, 1, size=(112, 112, 3)).astype(np.float32)
+        depth = np.random.uniform(0, 1, size=(112, 112)).astype(np.float32)
 
         return image, depth
 

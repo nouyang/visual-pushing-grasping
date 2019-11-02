@@ -7,6 +7,20 @@ import constants
 
 def process_actions(nonlocal_variables, trainer, logger, robot, workspace_limits, heightmap_resolution,
                     heuristic_bootstrap, save_visualizations):
+    """
+    The main function of a thread that will process grasp predictions and execute actions.
+    :param nonlocal_variables:      Main connection between this thread and the main thread.
+                                    A (hopefully thread-safe dictionary).
+    :param trainer:                 Trainer object.
+    :param logger:                  Logger object.
+    :param robot:                   Robot object.
+    :param workspace_limits:        Workspace limits.
+    :param heightmap_resolution:    Height map resolution.
+    :param heuristic_bootstrap:     Should we use a heuristic grasping algorithm after a certain number of actions
+                                    that have no effects.
+    :param save_visualizations:     Save visualizations.
+    :return:                        None.
+    """
 
     while True:
         # print('!-- Running process actions loop')
@@ -87,10 +101,10 @@ def process_actions(nonlocal_variables, trainer, logger, robot, workspace_limits
 
                 # TODO: ValueError: operands could not be broadcast together with shapes (364,273,3) (364,364,3)
                 grasp_pred_vis = trainer.get_prediction_vis(
-                    grasp_predictions, color_heightmap, nonlocal_variables[constants.BEST_PIX_IND])
-                logger.save_visualizations(
-                    trainer.iteration, grasp_pred_vis, 'grasp')
-                cv2.imwrite('visualization.grasp.png', grasp_pred_vis)
+                    grasp_predictions, color_heightmap, nonlocal_variables[constants.BEST_PIX_IND]
+                )
+                logger.save_visualizations(trainer.iteration, grasp_pred_vis, 'grasp')
+                #cv2.imwrite('visualization.grasp.png', grasp_pred_vis)
 
             # Initialize variables that influence reward
             nonlocal_variables[constants.GRASP_SUCCESS] = False
@@ -108,12 +122,17 @@ def process_actions(nonlocal_variables, trainer, logger, robot, workspace_limits
 
 
 def training_step(prev_primitive_action, prev_reward_value, trainer, logger):
+    """
+    Run a single experience replay training step.
+    :param prev_primitive_action:       Previous primitive action.
+    :param prev_reward_value:           Previous reward.
+    :param trainer:                     Trainer object.
+    :param logger:                      Logger object.
+    :return:                            None.
+    """
 
     sample_primitive_action = prev_primitive_action
-    if sample_primitive_action == 'push':
-        sample_primitive_action_id = 0
-        sample_reward_value = 0 if prev_reward_value == 0.5 else 0.5
-    elif sample_primitive_action == 'grasp':
+    if sample_primitive_action == 'grasp':
         sample_primitive_action_id = 1
         sample_reward_value = 0 if prev_reward_value == 1 else 1
 

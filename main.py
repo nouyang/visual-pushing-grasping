@@ -147,8 +147,7 @@ def main(args):
 
     # Start main training/testing loop
     while True:
-        print('\n%s iteration: %d' %
-              ('Testing' if is_testing else 'Training', trainer.iteration))
+        print('\n%s iteration: %d' % ('Testing' if is_testing else 'Training', trainer.iteration))
         iteration_time_0 = time.time()
 
         # Make sure simulation is still stable (if not, reset simulation)
@@ -161,10 +160,10 @@ def main(args):
         depth_img = depth_img * robot.cam_depth_scale
 
         # Get heightmap from RGB-D image (by re-projecting 3D point cloud)
-        print("Thsi is the heightmap res", heightmap_resolution)
+        print("This is the heightmap resolution", heightmap_resolution)
         heightmap_resolution = 0.0011
-        print("Thsi is the intrinsics", robot.cam_intrinsics)
-        print("Thsi is the deph scale", robot.cam_depth_scale)
+        print("This is the intrinsics", robot.cam_intrinsics)
+        print("This is the depth scale", robot.cam_depth_scale)
 
         if is_mock:
             color_heightmap = color_img
@@ -173,7 +172,6 @@ def main(args):
             color_heightmap, depth_heightmap = utils.get_heightmap(
                 color_img, depth_img, robot.cam_intrinsics, robot.cam_pose, workspace_limits, heightmap_resolution)
 
-        print('output from utils, depth heighmap', depth_heightmap.shape)
         valid_depth_heightmap = depth_heightmap.copy()
         valid_depth_heightmap[np.isnan(valid_depth_heightmap)] = 0
 
@@ -196,8 +194,7 @@ def main(args):
         if np.sum(stuff_count) < empty_threshold or (is_sim and nonlocal_variables[constants.NO_CHANGE_COUNT] > 10):
             nonlocal_variables[constants.NO_CHANGE_COUNT] = 0
             if is_sim:
-                print('Not enough objects in view (value: %d)! Repositioning objects.' % (
-                    np.sum(stuff_count)))
+                print('Not enough objects in view (value: %d)! Repositioning objects.' % (np.sum(stuff_count)))
                 robot.restart_sim()
                 robot.add_objects()
                 # If at end of test run, re-load original weights (before test run)
@@ -209,7 +206,8 @@ def main(args):
 
                 # TODO: edit
                 print('Not enough stuff on the table (value: %d)! Flipping over bin of objects...' % (
-                    np.sum(stuff_count)))
+                    np.sum(stuff_count))
+                )
                 time.sleep(1)
                 robot.restart_real()
 
@@ -223,12 +221,8 @@ def main(args):
         if not exit_called:
             print("Let's get some grasp predictions")
 
-            # TODO: edit
             # Run forward pass with network to get affordances
-            print('inn main.py, valid depth heigphtamp',
-                  valid_depth_heightmap.shape)
-            grasp_predictions = trainer.forward(
-                color_heightmap, valid_depth_heightmap, is_volatile=True)
+            grasp_predictions = trainer.forward(color_heightmap, valid_depth_heightmap, is_volatile=True)
 
             # talk to the thread: process grasp predictions, maybe save some visualizations and execute robot actions
             print("executing action--parent")
