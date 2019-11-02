@@ -26,6 +26,7 @@ def main(args):
 
     # --------------- Setup options ---------------
     is_sim = args.is_sim  # Run in simulation?
+    is_mock = args.is_mock
     # Directory containing 3D mesh files (.obj) of objects to be added to simulation
     obj_mesh_dir = os.path.abspath(args.obj_mesh_dir) if is_sim else None
     # Number of objects to add to simulation
@@ -48,9 +49,6 @@ def main(args):
             # [[0.3, 0.748], [-0.224, 0.224], [-0.255, -0.1]])
         # NOTE: 5 Oct 2019
         workspace_limits = np.asarray(
-            #        [[-0.600, -0.300], [-0.250, 0.150], [-0.300, -0.200]])
-            # [[-0.850, -0.520], [-0.250, 0.150], [-0.480, -0.200]])
-            # [[-0.850, -0.520], [-0.250, 0.150], [-0.320, -0.150]])
             [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
@@ -141,7 +139,8 @@ def main(args):
 
     # Start main training/testing loop
     while True:
-        print('\n%s iteration: %d' % ('Testing' if is_testing else 'Training', trainer.iteration))
+        print('\n%s iteration: %d' %
+              ('Testing' if is_testing else 'Training', trainer.iteration))
         iteration_time_0 = time.time()
 
         # Make sure simulation is still stable (if not, reset simulation)
@@ -188,7 +187,8 @@ def main(args):
         if np.sum(stuff_count) < empty_threshold or (is_sim and nonlocal_variables[constants.NO_CHANGE_COUNT] > 10):
             nonlocal_variables[constants.NO_CHANGE_COUNT] = 0
             if is_sim:
-                print('Not enough objects in view (value: %d)! Repositioning objects.' % (np.sum(stuff_count)))
+                print('Not enough objects in view (value: %d)! Repositioning objects.' % (
+                    np.sum(stuff_count)))
                 robot.restart_sim()
                 robot.add_objects()
                 # If at end of test run, re-load original weights (before test run)
@@ -216,7 +216,8 @@ def main(args):
             print("Let's get some grasp predictions")
 
             # Run forward pass with network to get affordances
-            grasp_predictions = trainer.forward(color_heightmap, valid_depth_heightmap, is_volatile=True)
+            grasp_predictions = trainer.forward(
+                color_heightmap, valid_depth_heightmap, is_volatile=True)
 
             # talk to the thread: process grasp predictions, maybe save some visualizations and execute robot actions
             print("executing action--parent")
@@ -229,9 +230,11 @@ def main(args):
         if 'prev_color_img' in locals():
 
             # Detect changes
-            change_detected, change_value = utils.detect_changes(depth_heightmap, prev_depth_heightmap)
+            change_detected, change_value = utils.detect_changes(
+                depth_heightmap, prev_depth_heightmap)
             change_detected = change_detected or prev_grasp_success
-            print('Change detected: %r (value: %d)' % (change_detected, change_value))
+            print('Change detected: %r (value: %d)' %
+                  (change_detected, change_value))
 
             if change_detected:
                 if prev_primitive_action == 'grasp':
@@ -256,11 +259,13 @@ def main(args):
 
             # Adjust exploration probability
             if not is_testing:
-                explore_prob = max(0.5 * np.power(0.9998, trainer.iteration), 0.1) if explore_rate_decay else 0.5
+                explore_prob = max(
+                    0.5 * np.power(0.9998, trainer.iteration), 0.1) if explore_rate_decay else 0.5
 
             # Do sampling for experience replay
             if experience_replay and not is_testing:
-                runner.training_step(prev_primitive_action, prev_reward_value, trainer, logger)
+                runner.training_step(prev_primitive_action,
+                                     prev_reward_value, trainer, logger)
 
             # Save model snapshot
             if not is_testing:
