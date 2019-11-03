@@ -46,7 +46,7 @@ workspace_limits = np.asarray(
     # [[-0.650, -0.400], [-0.100, 0.100], [-0.300, -0.150]])
     # [[-0.891, -0.556], [-0.357, 0.131], [-0.340, -0.190]])
     # [[-0.850, -0.520], [-0.250, 0.150], [-0.400, -0.350]])
-    [[-0.750, -0.550], [-0.250, 0.150], [-0.240, -0.090]])
+    [[-0.700, -0.550], [-0.250, 0.150], [-0.240, -0.090]])
 # [[-0.750, -0.500], [-0.250, 0.150], [-0.300, -0.150]])
 
 # calib_grid_step = 0.05
@@ -59,7 +59,6 @@ calib_grid_step = 0.15
 
 # NOTE: measured
 checkerboard_offset_from_tool = [-0.0572, 0.000, 0.0185]
-# checkerboard_offset_from_tool = [0.00, -0.0572, 0.0185]
 
 
 # ---------------------------------------------
@@ -89,15 +88,15 @@ observed_pts = []
 observed_pix = []
 
 home_in_rad = np.deg2rad(
-    np.array([0, -13.48, 88.9, -75.5, 90, 0]))
-np.array([0, -13.48, 88.9, -255, -90, 180])
+    # np.array([0, -13.48, 88.9, -75.5, 90, 0]))  # TODO: this doesn't work, when calib is correct
+    np.array([0, -16., 90., -253, -86.5, -181.]))
+# home_in_rad = np.deg2rad([0, -13.7, 90, -165., -90., -5.]) # gripper facing up
 
+# TODO
+# tool_orientation = [2.352, 2.405, -2.438]
 # tool_orientation = [2.339, 2.396, -2.480]
-tool_orientation = [1.200, -1.175, -1.175]
-# tool_orientation_deg = [0., 90., 0.] # TODO: why doesn't this work? robot
-# waits forever
-# tool_orientation = np.deg2rad(tool_orientation_deg)
-# print('toole orientation', tool_orientation)
+tool_orientation = [1.23, -1.19, -1.19]
+print('toole orientation', tool_orientation)
 
 
 # Move robot to home pose
@@ -235,9 +234,9 @@ def get_rigid_transform_error(z_scale):
     # Apply z offset and compute new observed points using camera intrinsics
     observed_z = observed_pts[:, 2:] * z_scale
     observed_x = np.multiply(observed_pix[:, [
-        0]]-robot.cam_intrinsics[0][2], observed_z/robot.cam_intrinsics[0][0])
+                             0]]-robot.cam_intrinsics[0][2], observed_z/robot.cam_intrinsics[0][0])
     observed_y = np.multiply(observed_pix[:, [
-        1]]-robot.cam_intrinsics[1][2], observed_z/robot.cam_intrinsics[1][1])
+                             1]]-robot.cam_intrinsics[1][2], observed_z/robot.cam_intrinsics[1][1])
     new_observed_pts = np.concatenate(
         (observed_x, observed_y, observed_z), axis=1)
 
