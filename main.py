@@ -49,7 +49,9 @@ def main(args):
             # [[0.3, 0.748], [-0.224, 0.224], [-0.255, -0.1]])
         # NOTE: 5 Oct 2019
         workspace_limits = np.asarray(
-            [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
+            # [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
+            # [[-0.600, -0.400], [-0.190, 0.120], [-0.335, -0.090]])
+            [[-0.700, -0.550], [-0.250, 0.150], [-0.300, -0.090]])
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
     heightmap_resolution = 0.00115
@@ -92,7 +94,9 @@ def main(args):
     np.random.seed(random_seed)
 
     # home_rad = np.deg2rad([20.2, -26.6, 116.8, -183.3, 268.8, 20.2])
-    home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 181.4])
+    home_rad = np.deg2rad(
+        [20.91, -31.33, 114., -171., -90., 15.9])  # out of the way
+    # home_rad = np.deg2rad([0, -13.7, 90, -165., -90., -5.])  # 2 NOV 2-190
 
     # Initialize pick-and-place system (camera and robot)
     if is_mock:
@@ -112,7 +116,8 @@ def main(args):
     logger = Logger(continue_logging, logging_directory)
     # Save camera intrinsics and pose
     if not is_mock:
-        logger.save_camera_info(robot.cam_intrinsics, robot.cam_pose, robot.cam_depth_scale)
+        logger.save_camera_info(robot.cam_intrinsics,
+                                robot.cam_pose, robot.cam_depth_scale)
     # Save heightmap parameters
     logger.save_heightmap_info(workspace_limits, heightmap_resolution)
 
@@ -312,7 +317,8 @@ if __name__ == '__main__':
     # --------------- Setup options ---------------
     parser.add_argument('--is_sim', dest='is_sim', action='store_true',
                         default=False,                                    help='run in simulation?')
-    parser.add_argument('--is_mock', dest='is_mock', action='store_true', default=False)
+    parser.add_argument('--is_mock', dest='is_mock',
+                        action='store_true', default=False)
     parser.add_argument('--obj_mesh_dir', dest='obj_mesh_dir', action='store', default='objects/blocks',
                         help='directory containing 3D mesh files (.obj) of objects to be added to simulation')
     parser.add_argument('--num_obj', dest='num_obj', type=int, action='store', default=5,

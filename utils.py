@@ -46,8 +46,11 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     # height) above actual table for gripper to not hit the table
     # otherwsie depth_hieghtmap is blank
     heightmap_limits = workspace_limits.copy()
-    heightmap_limits[2][0] = -0.470
-    heightmap_limits[2][1] = -0.310
+    # heightmap_limits[2][0] = -0.470
+    # heightmap_limits[2][1] = -0.310
+    heightmap_limits[2][0] = -0.305
+    heightmap_limits[2][1] = -0.090
+    # [[-0.600, -0.400], [-0.190, 0.120], [-0.335, -0.090]])
     print(' for get_heightmap, lowered workspace limits', heightmap_limits)
     print(' for heighmap reso', heightmap_resolution)
 

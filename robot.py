@@ -148,7 +148,7 @@ class Robot(object):
 
                 print("!----- grasped object, going home now ---")
                 # home_position = [-0.440, -0.170, -0.200]
-                home_position = [-0.445, -0.238, -0.300]
+                home_position = [-0.445, -0.238, -0.150]
 
                 home = {'type': 'p', 'pose': np.append(home_position, tool_orientation),
                         'acc': self.joint_acc, 'vel': self.joint_vel, 'rad': 0.00}
