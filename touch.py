@@ -17,23 +17,22 @@ rtc_port = 30001
 # Cols: min max, Rows: x y z (define workspace limits in robot coordinates)
 # tool_orientation = [-1.22, 1.19, -1.17]  # gripper facing upward, for calib
 # tool_orientation = [2.339, 2.396, -2.480]
+# tool_orientation = [2.24, 2.30, -0.00]
 tool_orientation = [2.24, 2.30, -0.00]
 
 workspace_limits = np.asarray(
-    [[0.400, 0.600], [-0.250, 0.150], [0.195, 0.460]])
+    # [[0.400, 0.600], [-0.250, 0.150], [0.195, 0.460]])
+    # [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
+    [[-0.750, -0.550], [-0.250, 0.150], [-0.335, -0.090]])
 
-home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 181.4])
+# home_rad = np.deg2rad([16.6, -26.5, 116.8, -184.6, -90.4, 181.4])
+home_rad = np.deg2rad([0, -13.7, 90, -165., -90., -5.])
 
 # Move robot to home pose
 is_sim = False
 obj_mesh_dir = None
 num_obj = None
 
-tcp_host_ip = '10.75.15.199'
-tcp_port = 30002
-
-rtc_host_ip = '10.75.15.199'
-rtc_port = 30004
 
 is_testing = False
 test_preset_cases = None
@@ -43,6 +42,8 @@ robot = Robot(is_sim, obj_mesh_dir, num_obj, workspace_limits,
               tcp_host_ip, tcp_port, rtc_host_ip, rtc_port,
               is_testing, test_preset_cases, test_preset_file,
               home_joint_config=home_rad)
+
+print('Robot in touch.py has gone home')
 robot.r.open_gripper()
 
 # Slow down robot
@@ -80,7 +81,7 @@ def mouseclick_callback(event, x, y, flags, param):
 
         target_position = target_position[0:3, 0]
         print('Moving to ', target_position, ' with z offset of 0.200')
-        target_position[2] += 0.100
+        target_position[2] += 0.200
         robot.r.move_to(target_position, tool_orientation,
                         override_safety=True)
 
