@@ -6,12 +6,11 @@ import time
 import os
 import sys
 
-from pyUR import PyUR
 
 tcp_host_ip = "10.75.15.199"
 
 if __name__ == "__main__":
-    rob = urx(tcp_host_ip)
+    rob = urx.Robot(tcp_host_ip)
     #rob = urx.Robot("localhost")
 
     rob.set_tcp((0, 0, 0, 0, 0, 0))

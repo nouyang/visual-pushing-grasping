@@ -113,11 +113,11 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
 
     print('depth heightmap in utils.py', depth_heightmap.shape)
 
-    color_heightmap = color_heightmap[50:-50]
-    depth_heightmap = depth_heightmap[50:-50]
+    #color_heightmap = color_heightmap[50:-50]
+    #depth_heightmap = depth_heightmap[50:-50]
 
-    color_heightmap = cv2.resize(color_heightmap, (112, 112))
-    depth_heightmap = cv2.resize(depth_heightmap, (112, 112))
+    #color_heightmap = cv2.resize(color_heightmap, (112, 112))
+    #depth_heightmap = cv2.resize(depth_heightmap, (112, 112))
 
     # k = 0.64  # 0.64
     # # Scale image, to change heightmap resolution, so resultant image is 224x224

@@ -51,6 +51,7 @@ def main(args):
         workspace_limits = np.asarray(
             # [[-0.600, -0.400], [-0.190, 0.120], [-0.460, -0.200]])  # gripper is fat
             # [[-0.600, -0.400], [-0.190, 0.120], [-0.335, -0.090]])
+            # [[-0.700, -0.550], [-0.250, 0.150], [-0.300, -0.090]])
             [[-0.700, -0.550], [-0.250, 0.150], [-0.300, -0.090]])
 
     heightmap_resolution = args.heightmap_resolution  # Meters per pixel of heightmap
