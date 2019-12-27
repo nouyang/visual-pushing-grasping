@@ -15,6 +15,7 @@ def main():
     cam_depth_scale = np.loadtxt(
         'real/camera_depth_scale.txt', delimiter=' ')
 
+    # these need to be square
     workspace_limits = np.asarray(
         [[0.350, 0.650], [-0.250, 0.180], [0.080, 0.350]])
     heightmap_resolution = 0.002  # DEFAULT  # help='meters per pixel of heightmap')

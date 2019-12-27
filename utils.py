@@ -123,8 +123,8 @@ def get_heightmap(color_img, depth_img, cam_intrinsics, cam_pose, workspace_limi
     # # Scale image, to change heightmap resolution, so resultant image is 224x224
     # color_img = cv2.resize(color_img, (0, 0), fx=k, fy=k)
 
-    print('heightmap hack reshap in utils', color_heightmap.shape)
-    print('heightmap hack reshap in utils', depth_heightmap.shape)
+    print('heightmap hack reshape in utils', color_heightmap.shape)
+    print('heightmap hack reshape in utils', depth_heightmap.shape)
 
     return color_heightmap, depth_heightmap
 
