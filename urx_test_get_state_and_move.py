@@ -1,15 +1,21 @@
 # https://github.com/SintefManufacturing/python-urx/blob/master/urx/urrobot.py
 # Must be run with library from the repo
-import urxOld as urx
 import logging
+import urxOld as urx
 import time
 import os
 import sys
+import numpy as np
 
 
 tcp_host_ip = "10.75.15.199"
 
 if __name__ == "__main__":
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+    np.set_printoptions(precision=4)
+    print('!\n!------hi')
+
     rob = urx.Robot(tcp_host_ip)
     #rob = urx.Robot("localhost")
 
